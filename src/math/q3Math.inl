@@ -20,127 +20,101 @@
 //--------------------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------------------
-inline r32 q3Invert( r32 a )
-{
-	return a != 0.0f ? 1.0f / a : 0.0f;
+inline r32 q3Invert(r32 a) {
+    return a != 0.0f ? 1.0f / a : 0.0f;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline r32 q3Sign( r32 a )
-{
-	if ( a >= r32( 0.0 ) )
-	{
-		return r32( 1.0 );
-	}
+inline r32 q3Sign(r32 a) {
+    if (a >= r32(0.0)) {
+        return r32(1.0);
+    }
 
-	else
-	{
-		return r32( -1.0 );
-	}
+    else {
+        return r32(-1.0);
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
-inline r32 q3Abs( r32 a )
-{
-	if ( a < r32( 0.0 ) )
-		return -a;
+inline r32 q3Abs(r32 a) {
+    if (a < r32(0.0)) return -a;
 
-	return a;
+    return a;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline i32 q3Min( i32 a, i32 b )
-{
-	if ( a < b )
-		return a;
+inline i32 q3Min(i32 a, i32 b) {
+    if (a < b) return a;
 
-	return b;
+    return b;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline r32 q3Min( r32 a, r32 b )
-{
-	if ( a < b )
-		return a;
+inline r32 q3Min(r32 a, r32 b) {
+    if (a < b) return a;
 
-	return b;
+    return b;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline r32 q3Max( r32 a, r32 b )
-{
-	if ( a > b )
-		return a;
+inline r32 q3Max(r32 a, r32 b) {
+    if (a > b) return a;
 
-	return b;
+    return b;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline i32 q3Max( i32 a, i32 b )
-{
-	if ( a > b )
-		return a;
+inline i32 q3Max(i32 a, i32 b) {
+    if (a > b) return a;
 
-	return b;
+    return b;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline u8 q3Max( u8 a, u8 b )
-{
-	if ( a > b )
-		return a;
+inline u8 q3Max(u8 a, u8 b) {
+    if (a > b) return a;
 
-	return b;
+    return b;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline r32 q3Clamp01( r32 val )
-{
-	if ( val >= r32( 1.0 ) )
-		return 1.0;
+inline r32 q3Clamp01(r32 val) {
+    if (val >= r32(1.0)) return 1.0;
 
-	if ( val <= r32( 0.0 ) )
-		return 0.0;
+    if (val <= r32(0.0)) return 0.0;
 
-	return val;
+    return val;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline r32 q3Clamp( r32 min, r32 max, r32 a )
-{
-	if ( a < min )
-		return min;
+inline r32 q3Clamp(r32 min, r32 max, r32 a) {
+    if (a < min) return min;
 
-	if ( a > max )
-		return max;
+    if (a > max) return max;
 
-	return a;
+    return a;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline r32 q3Lerp( r32 a, r32 b, r32 t )
-{
-	return a * (r32( 1.0 ) - t) + b * t;
+inline r32 q3Lerp(r32 a, r32 b, r32 t) {
+    return a * (r32(1.0) - t) + b * t;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline const q3Vec3 q3Lerp( const q3Vec3& a, const q3Vec3& b, r32 t )
-{
-	return a * (r32( 1.0 ) - t) + b * t;
+inline const q3Vec3 q3Lerp(const q3Vec3& a, const q3Vec3& b, r32 t) {
+    return a * (r32(1.0) - t) + b * t;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline r32 q3RandomFloat( r32 l, r32 h )
-{
-	r32 a = r32( rand( ) );
-	a /= r32( RAND_MAX );
-	a = (h - l) * a + l;
+inline r32 q3RandomFloat(r32 l, r32 h) {
+    r32 a = r32(rand());
+    a /= r32(RAND_MAX);
+    a = (h - l) * a + l;
 
-	return a;
+    return a;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline i32 q3RandomInt( i32 low, i32 high )
-{
-	return (rand( ) % (high - low + 1) + low);
+inline i32 q3RandomInt(i32 low, i32 high) {
+    return (rand() % (high - low + 1) + low);
 }

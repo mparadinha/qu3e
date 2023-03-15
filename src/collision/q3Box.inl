@@ -22,46 +22,39 @@
 //--------------------------------------------------------------------------------------------------
 // q3Box
 //--------------------------------------------------------------------------------------------------
-inline void q3Box::SetUserdata( void* data ) const
-{
-	userData = data;
+inline void q3Box::SetUserdata(void* data) const {
+    userData = data;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline void* q3Box::GetUserdata( ) const
-{
-	return userData;
+inline void* q3Box::GetUserdata() const {
+    return userData;
 }
 
 //--------------------------------------------------------------------------------------------------
 // q3BoxDef
 //--------------------------------------------------------------------------------------------------
-inline void q3BoxDef::Set( const q3Transform& tx, const q3Vec3& extents )
-{
-	m_tx = tx;
-	m_e = extents * r32( 0.5 );
+inline void q3BoxDef::Set(const q3Transform& tx, const q3Vec3& extents) {
+    m_tx = tx;
+    m_e = extents * r32(0.5);
 }
 
 //--------------------------------------------------------------------------------------------------
-inline void q3BoxDef::SetRestitution( r32 restitution )
-{
-	m_restitution = restitution;
+inline void q3BoxDef::SetRestitution(r32 restitution) {
+    m_restitution = restitution;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline void q3BoxDef::SetFriction( r32 friction )
-{
-	m_friction = friction;
+inline void q3BoxDef::SetFriction(r32 friction) {
+    m_friction = friction;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline void q3BoxDef::SetDensity( r32 density )
-{
-	m_density = density;
+inline void q3BoxDef::SetDensity(r32 density) {
+    m_density = density;
 }
 
 //--------------------------------------------------------------------------------------------------
-inline void q3BoxDef::SetSensor( bool sensor )
-{
-	m_sensor = sensor;
+inline void q3BoxDef::SetSensor(bool sensor) {
+    m_sensor = sensor;
 }
