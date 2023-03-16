@@ -40,63 +40,8 @@ inline void q3Free(void* memory) {
 
 #define Q3_PTR_ADD(P, BYTES) ((decltype(P))(((u8*)P) + (BYTES)))
 
-class q3Stack {
-  private:
-    struct q3StackEntry {
-        u8* data;
-        i32 size;
-    };
-
-  public:
-    q3Stack();
-    ~q3Stack();
-
-    void Reserve(u32 size);
-    void* Allocate(i32 size);
-    void Free(void* data);
-
-  private:
-    u8* m_memory;
-    q3StackEntry* m_entries;
-
-    u32 m_index;
-
-    i32 m_allocation;
-    i32 m_entryCount;
-    i32 m_entryCapacity;
-    u32 m_stackSize;
-};
-
 const i32 q3k_heapSize = 1024 * 1024 * 20;
 const i32 q3k_heapInitialCapacity = 1024;
-
-class q3Heap {
-  private:
-    struct q3Header {
-        q3Header* next;
-        q3Header* prev;
-        i32 size;
-    };
-
-    struct q3FreeBlock {
-        q3Header* header;
-        i32 size;
-    };
-
-  public:
-    q3Heap();
-    ~q3Heap();
-
-    void* Allocate(i32 size);
-    void Free(void* memory);
-
-  private:
-    q3Header* m_memory;
-
-    q3FreeBlock* m_freeBlocks;
-    i32 m_freeBlockCount;
-    i32 m_freeBlockCapacity;
-};
 
 class q3PagedAllocator {
     struct q3Block {
@@ -108,7 +53,7 @@ class q3PagedAllocator {
         q3Block* data;
     };
 
-  public:
+public:
     q3PagedAllocator(i32 elementSize, i32 elementsPerPage);
     ~q3PagedAllocator();
 
@@ -117,7 +62,7 @@ class q3PagedAllocator {
 
     void Clear();
 
-  private:
+private:
     i32 m_blockSize;
     i32 m_blocksPerPage;
 

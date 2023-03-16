@@ -41,7 +41,7 @@ struct q3Box;
 enum q3BodyType { eStaticBody, eDynamicBody, eKinematicBody };
 
 class q3Body {
-  public:
+public:
     // Adds a box to this body. Boxes are all defined in local space
     // of their owning body. Boxes cannot be defined relative to one
     // another. The body will recalculate its mass values. No contacts
@@ -105,7 +105,11 @@ class q3Body {
     r32 GetMass() const;
     r32 GetInvMass() const;
 
-  private:
+    void SetFlag(i32 flag) { this->m_flags |= flag; }
+
+    bool HasFlag(i32 flag) { return this->m_flags & flag; }
+
+private:
     // m_flags
     enum {
         eAwake = 0x001,

@@ -39,7 +39,7 @@ class q3Render;
 struct q3Island;
 
 class q3ContactListener {
-  public:
+public:
     virtual ~q3ContactListener() {}
 
     virtual void BeginContact(const q3ContactConstraint* contact) = 0;
@@ -47,14 +47,16 @@ class q3ContactListener {
 };
 
 class q3QueryCallback {
-  public:
+public:
     virtual ~q3QueryCallback() {}
 
     virtual bool ReportShape(q3Box* box) = 0;
 };
 
 class q3Scene {
-  public:
+public:
+    Allocator allocator;
+
     q3Scene(
         r32 dt, const q3Vec3& gravity = q3Vec3(r32(0.0), r32(-9.8), r32(0.0)), i32 iterations = 20
     );
@@ -63,6 +65,9 @@ class q3Scene {
     // Run the simulation forward in time by dt (fixed timestep). Variable
     // timestep is not supported.
     void Step();
+
+    // helper for `q3Scene::Step`
+    void BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 stackSize);
 
     // Construct a new rigid body. The BodyDef can be reused at the user's
     // discretion, as no reference to the BodyDef is kept.
@@ -130,15 +135,12 @@ class q3Scene {
     // simulation.
     void Dump(FILE* file) const;
 
-  private:
+private:
     q3ContactManager m_contactManager;
     q3PagedAllocator m_boxAllocator;
 
     i32 m_bodyCount;
     q3Body* m_bodyList;
-
-    q3Stack m_stack;
-    q3Heap m_heap;
 
     q3Vec3 m_gravity;
     r32 m_dt;

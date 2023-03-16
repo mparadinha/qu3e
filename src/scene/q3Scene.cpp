@@ -33,7 +33,7 @@ distribution.
 #include "q3Scene.h"
 
 q3Scene::q3Scene(r32 dt, const q3Vec3& gravity, i32 iterations) :
-    m_contactManager(&m_stack),
+    m_contactManager(),
     m_boxAllocator(sizeof(q3Box), 256),
     m_bodyCount(0),
     m_bodyList(NULL),
@@ -48,6 +48,59 @@ q3Scene::~q3Scene() {
     Shutdown();
 }
 
+void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 stackSize) {
+    seed->SetFlag(q3Body::eIsland); // Mark seed as apart of island
+
+    i32 stackCount = 0;
+    stack[stackCount++] = seed;
+    island->m_bodyCount = 0;
+    island->m_contactCount = 0;
+
+    // Perform DFS on constraint graph
+    while (stackCount > 0) {
+        // Decrement stack to implement iterative backtracking
+        q3Body* body = stack[--stackCount];
+        island->Add(body);
+
+        // Awaken all bodies connected to the island
+        body->SetToAwake();
+
+        // Do not search across static bodies to keep island
+        // formations as small as possible, however the static
+        // body itself should be apart of the island in order
+        // to properly represent a full contact
+        if (body->HasFlag(q3Body::eStatic)) continue;
+
+        // Search all contacts connected to this body
+        q3ContactEdge* contacts = body->m_contactList;
+        for (q3ContactEdge* edge = contacts; edge; edge = edge->next) {
+            q3ContactConstraint* contact = edge->constraint;
+
+            // Skip contacts that have been added to an island already
+            if (contact->m_flags & q3ContactConstraint::eIsland) continue;
+            // Can safely skip this contact if it didn't actually collide
+            // with anything
+            if (!(contact->m_flags & q3ContactConstraint::eColliding)) continue;
+            // Skip sensors
+            if (contact->A->sensor || contact->B->sensor) continue;
+
+            // Mark island flag and add to island
+            contact->m_flags |= q3ContactConstraint::eIsland;
+            island->Add(contact);
+
+            // Attempt to add the other body in the contact to the island
+            // to simulate contact awakening propogation
+            q3Body* other = edge->other;
+            if (other->HasFlag(q3Body::eIsland)) continue;
+
+            assert(stackCount < stackSize);
+
+            stack[stackCount++] = other;
+            other->m_flags |= q3Body::eIsland;
+        }
+    }
+}
+
 void q3Scene::Step() {
     if (m_newBox) {
         m_contactManager.m_broadphase.UpdatePairs();
@@ -58,25 +111,13 @@ void q3Scene::Step() {
 
     for (q3Body* body = m_bodyList; body; body = body->m_next) body->m_flags &= ~q3Body::eIsland;
 
-    // Size the stack island, pick worst case size
-    m_stack.Reserve(
-        sizeof(q3Body*) * m_bodyCount + sizeof(q3VelocityState) * m_bodyCount +
-        sizeof(q3ContactConstraint*) * m_contactManager.m_contactCount +
-        sizeof(q3ContactConstraintState) * m_contactManager.m_contactCount +
-        sizeof(q3Body*) * m_bodyCount
-    );
-
     q3Island island;
     island.m_bodyCapacity = m_bodyCount;
     island.m_contactCapacity = m_contactManager.m_contactCount;
-    island.m_bodies = (q3Body**)m_stack.Allocate(sizeof(q3Body*) * m_bodyCount);
-    island.m_velocities = (q3VelocityState*)m_stack.Allocate(sizeof(q3VelocityState) * m_bodyCount);
-    island.m_contacts = (q3ContactConstraint**)m_stack.Allocate(
-        sizeof(q3ContactConstraint*) * island.m_contactCapacity
-    );
-    island.m_contactStates = (q3ContactConstraintState*)m_stack.Allocate(
-        sizeof(q3ContactConstraintState) * island.m_contactCapacity
-    );
+    island.m_bodies = allocator.alloc<q3Body*>(m_bodyCount);
+    island.m_velocities = allocator.alloc<q3VelocityState>(m_bodyCount);
+    island.m_contacts = allocator.alloc<q3ContactConstraint*>(island.m_contactCapacity);
+    island.m_contactStates = allocator.alloc<q3ContactConstraintState>(island.m_contactCapacity);
     island.m_allowSleep = m_allowSleep;
     island.m_enableFriction = m_enableFriction;
     island.m_bodyCount = 0;
@@ -87,73 +128,14 @@ void q3Scene::Step() {
 
     // Build each active island and then solve each built island
     i32 stackSize = m_bodyCount;
-    q3Body** stack = (q3Body**)m_stack.Allocate(sizeof(q3Body*) * stackSize);
-    printf("building/solving all the islands\n");
+    q3Body** stack = allocator.alloc<q3Body*>(stackSize);
     for (q3Body* seed = m_bodyList; seed; seed = seed->m_next) {
-        // Seed cannot be apart of an island already
-        if (seed->m_flags & q3Body::eIsland) continue;
+        if (seed->HasFlag(q3Body::eIsland)) continue; // Seed can't be part of an island already
+        if (!seed->HasFlag(q3Body::eAwake)) continue; // Seed must be awake
+        // Seed cannot be a static body in order to keep islands as small as possible
+        if (seed->HasFlag(q3Body::eStatic)) continue;
 
-        // Seed must be awake
-        if (!(seed->m_flags & q3Body::eAwake)) continue;
-
-        // Seed cannot be a static body in order to keep islands
-        // as small as possible
-        if (seed->m_flags & q3Body::eStatic) continue;
-
-        i32 stackCount = 0;
-        stack[stackCount++] = seed;
-        island.m_bodyCount = 0;
-        island.m_contactCount = 0;
-
-        // Mark seed as apart of island
-        seed->m_flags |= q3Body::eIsland;
-
-        // Perform DFS on constraint graph
-        while (stackCount > 0) {
-            // Decrement stack to implement iterative backtracking
-            q3Body* body = stack[--stackCount];
-            island.Add(body);
-
-            // Awaken all bodies connected to the island
-            body->SetToAwake();
-
-            // Do not search across static bodies to keep island
-            // formations as small as possible, however the static
-            // body itself should be apart of the island in order
-            // to properly represent a full contact
-            if (body->m_flags & q3Body::eStatic) continue;
-
-            // Search all contacts connected to this body
-            q3ContactEdge* contacts = body->m_contactList;
-            for (q3ContactEdge* edge = contacts; edge; edge = edge->next) {
-                q3ContactConstraint* contact = edge->constraint;
-
-                // Skip contacts that have been added to an island already
-                if (contact->m_flags & q3ContactConstraint::eIsland) continue;
-
-                // Can safely skip this contact if it didn't actually collide
-                // with anything
-                if (!(contact->m_flags & q3ContactConstraint::eColliding)) continue;
-
-                // Skip sensors
-                if (contact->A->sensor || contact->B->sensor) continue;
-
-                // Mark island flag and add to island
-                contact->m_flags |= q3ContactConstraint::eIsland;
-                island.Add(contact);
-
-                // Attempt to add the other body in the contact to the island
-                // to simulate contact awakening propogation
-                q3Body* other = edge->other;
-                if (other->m_flags & q3Body::eIsland) continue;
-
-                assert(stackCount < stackSize);
-
-                stack[stackCount++] = other;
-                other->m_flags |= q3Body::eIsland;
-            }
-        }
-
+        BuildIsland(&island, seed, stack, stackSize);
         assert(island.m_bodyCount != 0);
 
         island.Initialize();
@@ -168,11 +150,11 @@ void q3Scene::Step() {
         }
     }
 
-    m_stack.Free(stack);
-    m_stack.Free(island.m_contactStates);
-    m_stack.Free(island.m_contacts);
-    m_stack.Free(island.m_velocities);
-    m_stack.Free(island.m_bodies);
+    allocator.free(stack);
+    allocator.free(island.m_contactStates);
+    allocator.free(island.m_contacts);
+    allocator.free(island.m_velocities);
+    allocator.free(island.m_bodies);
 
     // Update the broadphase AABBs
     for (q3Body* body = m_bodyList; body; body = body->m_next) {
@@ -192,8 +174,8 @@ void q3Scene::Step() {
 }
 
 q3Body* q3Scene::CreateBody(const q3BodyDef& def) {
-    q3Body* body = (q3Body*)m_heap.Allocate(sizeof(q3Body));
-    new (body) q3Body(def, this);
+    q3Body* body = this->allocator.create<q3Body>();
+    *body = q3Body(def, this);
 
     // Add body to scene bodyList
     body->m_prev = NULL;
@@ -216,29 +198,21 @@ void q3Scene::RemoveBody(q3Body* body) {
 
     // Remove body from scene bodyList
     if (body->m_next) body->m_next->m_prev = body->m_prev;
-
     if (body->m_prev) body->m_prev->m_next = body->m_next;
-
     if (body == m_bodyList) m_bodyList = body->m_next;
-
     --m_bodyCount;
 
-    m_heap.Free(body);
+    this->allocator.free(body);
 }
 
 void q3Scene::RemoveAllBodies() {
     q3Body* body = m_bodyList;
-
     while (body) {
         q3Body* next = body->m_next;
-
         body->RemoveAllBoxes();
-
-        m_heap.Free(body);
-
+        this->allocator.free(body);
         body = next;
     }
-
     m_bodyList = NULL;
 }
 

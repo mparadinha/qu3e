@@ -23,10 +23,10 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include "q3Body.h"
 #include "../broadphase/q3BroadPhase.h"
 #include "../collision/q3Box.h"
 #include "../scene/q3Scene.h"
+#include "q3Body.h"
 #include "q3Contact.h"
 
 q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
@@ -80,7 +80,7 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
 
 const q3Box* q3Body::AddBox(const q3BoxDef& def) {
     q3AABB aabb;
-    q3Box* box = (q3Box*)m_scene->m_heap.Allocate(sizeof(q3Box));
+    q3Box* box = m_scene->allocator.create<q3Box>();
     box->local = def.m_tx;
     box->e = def.m_e;
     box->next = m_boxes;
@@ -111,16 +111,13 @@ void q3Body::RemoveBox(const q3Box* box) {
     if (node == box) {
         m_boxes = node->next;
         found = true;
-    }
-
-    else {
+    } else {
         while (node) {
             if (node->next == box) {
                 node->next = box->next;
                 found = true;
                 break;
             }
-
             node = node->next;
         }
     }
@@ -144,7 +141,7 @@ void q3Body::RemoveBox(const q3Box* box) {
 
     CalculateMassData();
 
-    m_scene->m_heap.Free((void*)box);
+    m_scene->allocator.free(box);
 }
 
 void q3Body::RemoveAllBoxes() {
@@ -152,7 +149,7 @@ void q3Body::RemoveAllBoxes() {
         q3Box* next = m_boxes->next;
 
         m_scene->m_contactManager.m_broadphase.RemoveBox(m_boxes);
-        m_scene->m_heap.Free((void*)m_boxes);
+        m_scene->allocator.free(m_boxes);
 
         m_boxes = next;
     }

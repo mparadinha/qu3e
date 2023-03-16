@@ -23,15 +23,14 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include "q3ContactManager.h"
 #include "../collision/q3Box.h"
 #include "../debug/q3Render.h"
 #include "../scene/q3Scene.h"
 #include "q3Body.h"
 #include "q3Contact.h"
+#include "q3ContactManager.h"
 
-q3ContactManager::q3ContactManager(q3Stack* stack) :
-    m_stack(stack),
+q3ContactManager::q3ContactManager() :
     m_allocator(sizeof(q3ContactConstraint), 256),
     m_broadphase(this) {
     m_contactList = NULL;

@@ -39,4 +39,83 @@ typedef unsigned int u32;
 
 #define Q3_UNUSED(A) (void)A
 
+// ===============
+// zig style stuff
+// ===============
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.H>
+
+typedef size_t usize; // TODO(targets)
+
+namespace debug {
+
+template <typename... ArgTypes>
+void print(const char* fmt, ArgTypes... args) {
+    fprintf(stderr, fmt, args...);
+}
+
+template <typename... ArgTypes>
+[[noreturn]] void panic(const char* fmt, ArgTypes... args) {
+    print(fmt, args...);
+    exit(1);
+}
+
+void assert(bool ok) {
+    if (!ok) panic("assertion failed\n");
+}
+
+}; // namespace debug
+
+struct Allocator {
+    template <typename T>
+    T* alloc(usize n) {
+        return (T*)malloc(sizeof(T) * n);
+    }
+
+    template <typename T>
+    T* create() {
+        return (T*)malloc(sizeof(T));
+    }
+
+    template <typename T>
+    void free(T* ptr) {
+        ::free((void*)ptr);
+    }
+};
+
+template <typename T>
+struct Slice {
+    T* ptr;
+    usize len;
+
+    Slice() : ptr(nullptr), len(0) {}
+
+    Slice(T* ptr, usize len) : ptr(ptr), len(len) {}
+
+    Slice(const char* str) : ptr((T*)str), len(strlen(str)) {}
+
+    T& operator[](usize idx) {
+        debug::assert(idx < this->len);
+        return this->ptr[idx];
+    }
+
+    const T& operator[](usize idx) const {
+        debug::assert(idx < this->len);
+        return this->ptr[idx];
+    }
+
+    Slice<T> slice(usize start, usize end) const {
+        debug::assert(start < end);
+        debug::assert(end <= this->len);
+        return Slice(this->ptr + start, end - start);
+    }
+
+    Slice<T> sliceToEnd(usize start) const { return this->slice(start, this->len); }
+
+    auto begin() { return this->ptr; }
+
+    auto end() { return this->ptr + this->len; }
+};
+
 #endif // Q3TYPES_H
