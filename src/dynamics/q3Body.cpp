@@ -80,7 +80,7 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
 
 const q3Box* q3Body::AddBox(const q3BoxDef& def) {
     q3AABB aabb;
-    q3Box* box = m_scene->allocator.create<q3Box>();
+    q3Box* box = m_scene->allocator.create<q3Box>().value;
     box->local = def.m_tx;
     box->e = def.m_e;
     box->next = m_boxes;

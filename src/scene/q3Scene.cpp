@@ -114,10 +114,11 @@ void q3Scene::Step() {
     q3Island island;
     island.m_bodyCapacity = m_bodyCount;
     island.m_contactCapacity = m_contactManager.m_contactCount;
-    island.m_bodies = allocator.alloc<q3Body*>(m_bodyCount);
-    island.m_velocities = allocator.alloc<q3VelocityState>(m_bodyCount);
-    island.m_contacts = allocator.alloc<q3ContactConstraint*>(island.m_contactCapacity);
-    island.m_contactStates = allocator.alloc<q3ContactConstraintState>(island.m_contactCapacity);
+    island.m_bodies = allocator.alloc<q3Body*>(m_bodyCount).value.ptr;
+    island.m_velocities = allocator.alloc<q3VelocityState>(m_bodyCount).value.ptr;
+    island.m_contacts = allocator.alloc<q3ContactConstraint*>(island.m_contactCapacity).value.ptr;
+    island.m_contactStates =
+        allocator.alloc<q3ContactConstraintState>(island.m_contactCapacity).value.ptr;
     island.m_allowSleep = m_allowSleep;
     island.m_enableFriction = m_enableFriction;
     island.m_bodyCount = 0;
@@ -128,7 +129,7 @@ void q3Scene::Step() {
 
     // Build each active island and then solve each built island
     i32 stackSize = m_bodyCount;
-    q3Body** stack = allocator.alloc<q3Body*>(stackSize);
+    q3Body** stack = allocator.alloc<q3Body*>(stackSize).value.ptr;
     for (q3Body* seed = m_bodyList; seed; seed = seed->m_next) {
         if (seed->HasFlag(q3Body::eIsland)) continue; // Seed can't be part of an island already
         if (!seed->HasFlag(q3Body::eAwake)) continue; // Seed must be awake
@@ -174,7 +175,7 @@ void q3Scene::Step() {
 }
 
 q3Body* q3Scene::CreateBody(const q3BodyDef& def) {
-    q3Body* body = this->allocator.create<q3Body>();
+    q3Body* body = this->allocator.create<q3Body>().value;
     *body = q3Body(def, this);
 
     // Add body to scene bodyList
