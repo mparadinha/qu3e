@@ -91,7 +91,7 @@ struct Slice {
 
     Slice() : ptr(nullptr), len(0) {}
 
-    Slice(T* ptr, usize len) : ptr(ptr), len(len) {}
+    Slice(T* ptr, size_t len) : ptr(ptr), len(len) {}
 
     Slice(const char* str) : ptr((T*)str), len(strlen(str)) {}
 
