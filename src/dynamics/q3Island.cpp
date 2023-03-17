@@ -23,31 +23,30 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include "q3Island.h"
 #include "../broadphase/q3BroadPhase.h"
 #include "../common/q3Memory.h"
 #include "../common/q3Settings.h"
 #include "q3Body.h"
 #include "q3Contact.h"
 #include "q3ContactSolver.h"
+#include "q3Island.h"
 
 void q3Island::Solve() {
     // Apply gravity
     // Integrate velocities and create state buffers, calculate world inertia
-    for (i32 i = 0; i < m_bodyCount; ++i) {
-        q3Body* body = m_bodies[i];
-        q3VelocityState* v = m_velocities + i;
+    for (auto [body, i] : bodies.items.iter()) {
+        q3VelocityState* v = &velocities.items[i];
 
-        if (body->m_flags & q3Body::eDynamic) {
-            body->ApplyLinearForce(m_gravity * body->m_gravityScale);
+        if (body->HasFlag(q3Body::eDynamic)) {
+            body->ApplyLinearForce(gravity * body->m_gravityScale);
 
             // Calculate world space intertia tensor
             q3Mat3 r = body->m_tx.rotation;
             body->m_invInertiaWorld = r * body->m_invInertiaModel * q3Transpose(r);
 
             // Integrate velocity
-            body->m_linearVelocity += (body->m_force * body->m_invMass) * m_dt;
-            body->m_angularVelocity += (body->m_invInertiaWorld * body->m_torque) * m_dt;
+            body->m_linearVelocity += (body->m_force * body->m_invMass) * dt;
+            body->m_angularVelocity += (body->m_invInertiaWorld * body->m_torque) * dt;
 
             // From Box2D!
             // Apply damping.
@@ -56,8 +55,8 @@ void q3Island::Solve() {
             // Time step: v(t + dt) = v0 * exp(-c * (t + dt)) = v0 * exp(-c * t)
             // * exp(-c * dt) = v * exp(-c * dt) v2 = exp(-c * dt) * v1 Pade
             // approximation: v2 = v1 * 1 / (1 + c * dt)
-            body->m_linearVelocity *= r32(1.0) / (r32(1.0) + m_dt * body->m_linearDamping);
-            body->m_angularVelocity *= r32(1.0) / (r32(1.0) + m_dt * body->m_angularDamping);
+            body->m_linearVelocity *= r32(1.0) / (r32(1.0) + dt * body->m_linearDamping);
+            body->m_angularVelocity *= r32(1.0) / (r32(1.0) + dt * body->m_angularDamping);
         }
 
         v->v = body->m_linearVelocity;
@@ -68,37 +67,34 @@ void q3Island::Solve() {
     // Initialize velocity constraint for normal + friction and warm start
     q3ContactSolver contactSolver;
     contactSolver.Initialize(this);
-    contactSolver.PreSolve(m_dt);
+    contactSolver.PreSolve(dt);
 
     // Solve contacts
-    for (i32 i = 0; i < m_iterations; ++i) contactSolver.Solve();
+    for (i32 i = 0; i < iterations; ++i) contactSolver.Solve();
 
     contactSolver.ShutDown();
 
     // Copy back state buffers
     // Integrate positions
-    for (i32 i = 0; i < m_bodyCount; ++i) {
-        q3Body* body = m_bodies[i];
-        q3VelocityState* v = m_velocities + i;
+    for (auto [body, i] : bodies.items.iter()) {
+        q3VelocityState* v = &velocities.items[i];
 
-        if (body->m_flags & q3Body::eStatic) continue;
+        if (body->HasFlag(q3Body::eStatic)) continue;
 
         body->m_linearVelocity = v->v;
         body->m_angularVelocity = v->w;
 
         // Integrate position
-        body->m_worldCenter += body->m_linearVelocity * m_dt;
-        body->m_q.Integrate(body->m_angularVelocity, m_dt);
+        body->m_worldCenter += body->m_linearVelocity * dt;
+        body->m_q.Integrate(body->m_angularVelocity, dt);
         body->m_q = q3Normalize(body->m_q);
         body->m_tx.rotation = body->m_q.ToMat3();
     }
 
-    if (m_allowSleep) {
+    if (allow_sleep) {
         // Find minimum sleep time of the entire island
         f32 minSleepTime = Q3_R32_MAX;
-        for (i32 i = 0; i < m_bodyCount; ++i) {
-            q3Body* body = m_bodies[i];
-
+        for (auto body : bodies.items) {
             if (body->m_flags & q3Body::eStatic) continue;
 
             const r32 sqrLinVel = q3Dot(body->m_linearVelocity, body->m_linearVelocity);
@@ -112,7 +108,7 @@ void q3Island::Solve() {
             }
 
             else {
-                body->m_sleepTime += m_dt;
+                body->m_sleepTime += dt;
                 minSleepTime = q3Min(minSleepTime, body->m_sleepTime);
             }
         }
@@ -122,31 +118,25 @@ void q3Island::Solve() {
         // sleeping threshold, the entire island will be reformed next step
         // and sleep test will be tried again.
         if (minSleepTime > Q3_SLEEP_TIME) {
-            for (i32 i = 0; i < m_bodyCount; ++i) m_bodies[i]->SetToSleep();
+            for (auto body : bodies.items) body->SetToSleep();
         }
     }
 }
 
 void q3Island::Add(q3Body* body) {
-    assert(m_bodyCount < m_bodyCapacity);
-
-    body->m_islandIndex = m_bodyCount;
-
-    m_bodies[m_bodyCount++] = body;
+    body->m_islandIndex = bodies.items.len;
+    bodies.append(body).unwrap();
+    velocities.append(q3VelocityState{}).unwrap();
 }
 
 void q3Island::Add(q3ContactConstraint* contact) {
-    assert(m_contactCount < m_contactCapacity);
-
-    m_contacts[m_contactCount++] = contact;
+    contacts.append(contact).unwrap();
+    contact_states.append(q3ContactConstraintState{}).unwrap();
 }
 
 void q3Island::Initialize() {
-    for (i32 i = 0; i < m_contactCount; ++i) {
-        q3ContactConstraint* cc = m_contacts[i];
-
-        q3ContactConstraintState* c = m_contactStates + i;
-
+    for (auto [cc, i] : contacts.items.iter()) {
+        q3ContactConstraintState* c = &contact_states.items[i];
         c->centerA = cc->bodyA->m_worldCenter;
         c->centerB = cc->bodyB->m_worldCenter;
         c->iA = cc->bodyA->m_invInertiaWorld;

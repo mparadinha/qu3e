@@ -35,7 +35,7 @@ inline void q3DynamicAABBTree::AddToFreeList(i32 index) {
 
 //--------------------------------------------------------------------------------------------------
 inline void q3DynamicAABBTree::DeallocateNode(i32 index) {
-    assert(index >= 0 && index < m_capacity);
+    debug::assert(index >= 0 && index < m_capacity);
 
     m_nodes[index].next = m_freeList;
     m_nodes[index].height = Node::Null;
@@ -55,7 +55,7 @@ inline void q3DynamicAABBTree::Query(T* cb, const q3AABB& aabb) const {
 
     while (sp) {
         // k_stackCapacity too small
-        assert(sp < k_stackCapacity);
+        debug::assert(sp < k_stackCapacity);
 
         i32 id = stack[--sp];
 
@@ -86,7 +86,7 @@ void q3DynamicAABBTree::Query(T* cb, q3RaycastData& rayCast) const {
 
     while (sp) {
         // k_stackCapacity too small
-        assert(sp < k_stackCapacity);
+        debug::assert(sp < k_stackCapacity);
 
         i32 id = stack[--sp];
 

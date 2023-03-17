@@ -32,17 +32,17 @@ distribution.
 #include "../dynamics/q3Island.h"
 #include "q3Scene.h"
 
-q3Scene::q3Scene(r32 dt, const q3Vec3& gravity, i32 iterations) :
-    m_contactManager(),
-    m_boxAllocator(sizeof(q3Box), 256),
-    m_bodyCount(0),
-    m_bodyList(NULL),
-    m_gravity(gravity),
-    m_dt(dt),
-    m_iterations(iterations),
-    m_newBox(false),
-    m_allowSleep(true),
-    m_enableFriction(true) {}
+q3Scene::q3Scene(r32 dt, const q3Vec3& gravity, usize iterations) :
+    contact_manager(),
+    box_allocator(sizeof(q3Box), 256),
+    body_count(0),
+    body_list(NULL),
+    gravity(gravity),
+    dt(dt),
+    iterations(iterations),
+    new_box(false),
+    allow_sleep(true),
+    enable_friction(true) {}
 
 q3Scene::~q3Scene() {
     Shutdown();
@@ -53,8 +53,8 @@ void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 st
 
     i32 stackCount = 0;
     stack[stackCount++] = seed;
-    island->m_bodyCount = 0;
-    island->m_contactCount = 0;
+    island->bodies.shrinkRetainingCapacity(0);
+    island->contacts.shrinkRetainingCapacity(0);
 
     // Perform DFS on constraint graph
     while (stackCount > 0) {
@@ -93,7 +93,7 @@ void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 st
             q3Body* other = edge->other;
             if (other->HasFlag(q3Body::eIsland)) continue;
 
-            assert(stackCount < stackSize);
+            debug::assert(stackCount < stackSize);
 
             stack[stackCount++] = other;
             other->m_flags |= q3Body::eIsland;
@@ -102,73 +102,57 @@ void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 st
 }
 
 void q3Scene::Step() {
-    if (m_newBox) {
-        m_contactManager.m_broadphase.UpdatePairs();
-        m_newBox = false;
+    if (new_box) {
+        contact_manager.m_broadphase.UpdatePairs();
+        new_box = false;
     }
 
-    m_contactManager.TestCollisions();
+    contact_manager.TestCollisions();
 
-    for (q3Body* body = m_bodyList; body; body = body->m_next) body->m_flags &= ~q3Body::eIsland;
+    for (q3Body* body = body_list; body; body = body->m_next) body->m_flags &= ~q3Body::eIsland;
 
-    q3Island island;
-    island.m_bodyCapacity = m_bodyCount;
-    island.m_contactCapacity = m_contactManager.m_contactCount;
-    island.m_bodies = allocator.alloc<q3Body*>(m_bodyCount).value.ptr;
-    island.m_velocities = allocator.alloc<q3VelocityState>(m_bodyCount).value.ptr;
-    island.m_contacts = allocator.alloc<q3ContactConstraint*>(island.m_contactCapacity).value.ptr;
-    island.m_contactStates =
-        allocator.alloc<q3ContactConstraintState>(island.m_contactCapacity).value.ptr;
-    island.m_allowSleep = m_allowSleep;
-    island.m_enableFriction = m_enableFriction;
-    island.m_bodyCount = 0;
-    island.m_contactCount = 0;
-    island.m_dt = m_dt;
-    island.m_gravity = m_gravity;
-    island.m_iterations = m_iterations;
+    q3Island island =
+        q3Island::init(allocator, dt, gravity, iterations, allow_sleep, enable_friction);
+    defer(island.deinit());
+    island.bodies.ensureTotalCapacity(body_count).unwrap();
+    island.velocities.ensureTotalCapacity(body_count).unwrap();
+    island.contacts.ensureTotalCapacity(contact_manager.m_contactCount).unwrap();
+    island.contact_states.ensureTotalCapacity(contact_manager.m_contactCount).unwrap();
 
     // Build each active island and then solve each built island
-    i32 stackSize = m_bodyCount;
-    q3Body** stack = allocator.alloc<q3Body*>(stackSize).value.ptr;
-    for (q3Body* seed = m_bodyList; seed; seed = seed->m_next) {
+    i32 stackSize = body_count;
+    auto stack_slice = allocator.alloc<q3Body*>(stackSize).value;
+    defer(allocator.free(stack_slice));
+    for (q3Body* seed = body_list; seed; seed = seed->m_next) {
         if (seed->HasFlag(q3Body::eIsland)) continue; // Seed can't be part of an island already
         if (!seed->HasFlag(q3Body::eAwake)) continue; // Seed must be awake
         // Seed cannot be a static body in order to keep islands as small as possible
         if (seed->HasFlag(q3Body::eStatic)) continue;
 
-        BuildIsland(&island, seed, stack, stackSize);
-        assert(island.m_bodyCount != 0);
+        BuildIsland(&island, seed, stack_slice.ptr, stackSize);
+        debug::assert(island.bodies.items.len != 0);
 
         island.Initialize();
         island.Solve();
 
         // Reset all static island flags
         // This allows static bodies to participate in other island formations
-        for (i32 i = 0; i < island.m_bodyCount; i++) {
-            q3Body* body = island.m_bodies[i];
-
-            if (body->m_flags & q3Body::eStatic) body->m_flags &= ~q3Body::eIsland;
+        for (auto body : island.bodies.items) {
+            if (body->HasFlag(q3Body::eStatic)) body->UnsetFlag(q3Body::eIsland);
         }
     }
 
-    allocator.free(stack);
-    allocator.free(island.m_contactStates);
-    allocator.free(island.m_contacts);
-    allocator.free(island.m_velocities);
-    allocator.free(island.m_bodies);
-
     // Update the broadphase AABBs
-    for (q3Body* body = m_bodyList; body; body = body->m_next) {
+    for (q3Body* body = body_list; body; body = body->m_next) {
         if (body->m_flags & q3Body::eStatic) continue;
-
         body->SynchronizeProxies();
     }
 
     // Look for new contacts
-    m_contactManager.FindNewContacts();
+    contact_manager.FindNewContacts();
 
     // Clear all forces
-    for (q3Body* body = m_bodyList; body; body = body->m_next) {
+    for (q3Body* body = body_list; body; body = body->m_next) {
         q3Identity(body->m_force);
         q3Identity(body->m_torque);
     }
@@ -180,87 +164,58 @@ q3Body* q3Scene::CreateBody(const q3BodyDef& def) {
 
     // Add body to scene bodyList
     body->m_prev = NULL;
-    body->m_next = m_bodyList;
+    body->m_next = body_list;
 
-    if (m_bodyList) m_bodyList->m_prev = body;
+    if (body_list) body_list->m_prev = body;
 
-    m_bodyList = body;
-    ++m_bodyCount;
+    body_list = body;
+    ++body_count;
 
     return body;
 }
 
 void q3Scene::RemoveBody(q3Body* body) {
-    assert(m_bodyCount > 0);
+    debug::assert(body_count > 0);
 
-    m_contactManager.RemoveContactsFromBody(body);
+    contact_manager.RemoveContactsFromBody(body);
 
     body->RemoveAllBoxes();
 
     // Remove body from scene bodyList
     if (body->m_next) body->m_next->m_prev = body->m_prev;
     if (body->m_prev) body->m_prev->m_next = body->m_next;
-    if (body == m_bodyList) m_bodyList = body->m_next;
-    --m_bodyCount;
+    if (body == body_list) body_list = body->m_next;
+    --body_count;
 
-    this->allocator.free(body);
+    this->allocator.destroy(body);
 }
 
 void q3Scene::RemoveAllBodies() {
-    q3Body* body = m_bodyList;
+    q3Body* body = body_list;
     while (body) {
         q3Body* next = body->m_next;
         body->RemoveAllBoxes();
-        this->allocator.free(body);
+        this->allocator.destroy(body);
         body = next;
     }
-    m_bodyList = NULL;
+    body_list = NULL;
 }
 
 void q3Scene::SetAllowSleep(bool allowSleep) {
-    m_allowSleep = allowSleep;
-
+    allow_sleep = allowSleep;
     if (!allowSleep) {
-        for (q3Body* body = m_bodyList; body; body = body->m_next) body->SetToAwake();
+        for (q3Body* body = body_list; body; body = body->m_next) body->SetToAwake();
     }
-}
-
-void q3Scene::SetIterations(i32 iterations) {
-    m_iterations = q3Max(1, iterations);
-}
-
-void q3Scene::SetEnableFriction(bool enabled) {
-    m_enableFriction = enabled;
 }
 
 void q3Scene::Render(q3Render* render) const {
-    q3Body* body = m_bodyList;
-
-    while (body) {
-        body->Render(render);
-        body = body->m_next;
-    }
-
-    m_contactManager.RenderContacts(render);
-    // m_contactManager.m_broadphase.m_tree.Render( render );
-}
-
-const q3Vec3 q3Scene::GetGravity() const {
-    return m_gravity;
-}
-
-void q3Scene::SetGravity(const q3Vec3& gravity) {
-    m_gravity = gravity;
+    for (q3Body* body = body_list; body; body = body->m_next) { body->Render(render); }
+    contact_manager.RenderContacts(render);
 }
 
 void q3Scene::Shutdown() {
     RemoveAllBodies();
-
-    m_boxAllocator.Clear();
-}
-
-void q3Scene::SetContactListener(q3ContactListener* listener) {
-    m_contactManager.m_contactListener = listener;
+    box_allocator.Clear();
 }
 
 void q3Scene::QueryAABB(q3QueryCallback* cb, const q3AABB& aabb) const {
@@ -283,9 +238,9 @@ void q3Scene::QueryAABB(q3QueryCallback* cb, const q3AABB& aabb) const {
 
     SceneQueryWrapper wrapper;
     wrapper.m_aabb = aabb;
-    wrapper.broadPhase = &m_contactManager.m_broadphase;
+    wrapper.broadPhase = &contact_manager.m_broadphase;
     wrapper.cb = cb;
-    m_contactManager.m_broadphase.m_tree.Query(&wrapper, aabb);
+    contact_manager.m_broadphase.m_tree.Query(&wrapper, aabb);
 }
 
 void q3Scene::QueryPoint(q3QueryCallback* cb, const q3Vec3& point) const {
@@ -305,14 +260,14 @@ void q3Scene::QueryPoint(q3QueryCallback* cb, const q3Vec3& point) const {
 
     SceneQueryWrapper wrapper;
     wrapper.m_point = point;
-    wrapper.broadPhase = &m_contactManager.m_broadphase;
+    wrapper.broadPhase = &contact_manager.m_broadphase;
     wrapper.cb = cb;
     const r32 k_fattener = r32(0.5);
     q3Vec3 v(k_fattener, k_fattener, k_fattener);
     q3AABB aabb;
     aabb.min = point - v;
     aabb.max = point + v;
-    m_contactManager.m_broadphase.m_tree.Query(&wrapper, aabb);
+    contact_manager.m_broadphase.m_tree.Query(&wrapper, aabb);
 }
 
 void q3Scene::RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) const {
@@ -332,25 +287,25 @@ void q3Scene::RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) const {
 
     SceneQueryWrapper wrapper;
     wrapper.m_rayCast = &rayCast;
-    wrapper.broadPhase = &m_contactManager.m_broadphase;
+    wrapper.broadPhase = &contact_manager.m_broadphase;
     wrapper.cb = cb;
-    m_contactManager.m_broadphase.m_tree.Query(&wrapper, rayCast);
+    contact_manager.m_broadphase.m_tree.Query(&wrapper, rayCast);
 }
 
 void q3Scene::Dump(FILE* file) const {
     fprintf(file, "// Ensure 64/32-bit memory compatability with the dump contents\n");
-    fprintf(file, "assert( sizeof( int* ) == %lu );\n", sizeof(int*));
+    fprintf(file, "debug::assert( sizeof( int* ) == %lu );\n", sizeof(int*));
     fprintf(
-        file, "scene.SetGravity( q3Vec3( %.15lf, %.15lf, %.15lf ) );\n", m_gravity.x, m_gravity.y,
-        m_gravity.z
+        file, "scene.SetGravity( q3Vec3( %.15lf, %.15lf, %.15lf ) );\n", gravity.x, gravity.y,
+        gravity.z
     );
-    fprintf(file, "scene.SetAllowSleep( %s );\n", m_allowSleep ? "true" : "false");
-    fprintf(file, "scene.SetEnableFriction( %s );\n", m_enableFriction ? "true" : "false");
+    fprintf(file, "scene.SetAllowSleep( %s );\n", allow_sleep ? "true" : "false");
+    fprintf(file, "scene.SetEnableFriction( %s );\n", enable_friction ? "true" : "false");
 
-    fprintf(file, "q3Body** bodies = (q3Body**)q3Alloc( sizeof( q3Body* ) * %d );\n", m_bodyCount);
+    fprintf(file, "q3Body** bodies = (q3Body**)q3Alloc( sizeof( q3Body* ) * %lu );\n", body_count);
 
     i32 i = 0;
-    for (q3Body* body = m_bodyList; body; body = body->m_next, ++i) { body->Dump(file, i); }
+    for (q3Body* body = body_list; body; body = body->m_next, ++i) { body->Dump(file, i); }
 
     fprintf(file, "q3Free( bodies );\n");
 }

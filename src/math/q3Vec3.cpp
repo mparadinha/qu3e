@@ -24,7 +24,6 @@ distribution.
 */
 
 #include "q3Vec3.h"
-#include <cassert>
 
 q3Vec3::q3Vec3() {}
 
@@ -75,13 +74,13 @@ q3Vec3& q3Vec3::operator/=(r32 f) {
 }
 
 r32& q3Vec3::operator[](u32 i) {
-    assert(i >= 0 && i < 3);
+    debug::assert(i >= 0 && i < 3);
 
     return v[i];
 }
 
 r32 q3Vec3::operator[](u32 i) const {
-    assert(i >= 0 && i < 3);
+    debug::assert(i >= 0 && i < 3);
 
     return v[i];
 }

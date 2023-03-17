@@ -24,7 +24,6 @@ distribution.
 */
 
 #include "q3Mat3.h"
-#include <cassert>
 
 q3Mat3::q3Mat3() {}
 
@@ -105,7 +104,7 @@ q3Vec3& q3Mat3::operator[](u32 index) {
         case 0: return ex;
         case 1: return ey;
         case 2: return ez;
-        default: assert(false); return ex;
+        default: debug::assert(false); return ex;
     }
 }
 
@@ -114,7 +113,7 @@ const q3Vec3& q3Mat3::operator[](u32 index) const {
         case 0: return ex;
         case 1: return ey;
         case 2: return ez;
-        default: assert(false); return ex;
+        default: debug::assert(false); return ex;
     }
 }
 

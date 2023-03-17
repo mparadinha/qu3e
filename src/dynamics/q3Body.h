@@ -107,6 +107,8 @@ public:
 
     void SetFlag(i32 flag) { this->m_flags |= flag; }
 
+    void UnsetFlag(i32 flag) { this->m_flags &= ~flag; }
+
     bool HasFlag(i32 flag) { return this->m_flags & flag; }
 
 private:

@@ -56,9 +56,31 @@ public:
 class q3Scene {
 public:
     Allocator allocator;
+    q3Vec3 gravity;
+    usize body_count;
+    bool new_box;
+    bool allow_sleep;
+    // Friction occurs when two rigid bodies have shapes that slide along one
+    // another. The friction force resists this sliding motion.
+    bool enable_friction;
+    r32 dt;
+    // Increasing the iteration count increases the CPU cost of simulating
+    // Scene.Step(). Decreasing the iterations makes the simulation less
+    // realistic (convergent). A good iteration number range is 5 to 20.
+    usize iterations;
+    // Sets the listener to report collision start/end. Provides the user
+    // with a pointer to an q3ContactConstraint. The q3ContactConstraint
+    // holds pointers to the two shapes involved in a collision, and the
+    // two bodies connected to each shape. The q3ContactListener will be
+    // called very often, so it is recommended for the funciton to be very
+    // efficient. Provide a NULL pointer to remove the previously set
+    // listener.
+    q3ContactManager contact_manager;
+    q3PagedAllocator box_allocator;
+    q3Body* body_list;
 
     q3Scene(
-        r32 dt, const q3Vec3& gravity = q3Vec3(r32(0.0), r32(-9.8), r32(0.0)), i32 iterations = 20
+        r32 dt, const q3Vec3& gravity = q3Vec3(r32(0.0), r32(-9.8), r32(0.0)), usize iterations = 20
     );
     ~q3Scene();
 
@@ -84,36 +106,12 @@ public:
     // touched by something that wakes them up. The default is enabled.
     void SetAllowSleep(bool allowSleep);
 
-    // Increasing the iteration count increases the CPU cost of simulating
-    // Scene.Step(). Decreasing the iterations makes the simulation less
-    // realistic (convergent). A good iteration number range is 5 to 20.
-    // Only positive numbers are accepted. Non-positive and negative
-    // inputs set the iteration count to 1.
-    void SetIterations(i32 iterations);
-
-    // Friction occurs when two rigid bodies have shapes that slide along one
-    // another. The friction force resists this sliding motion.
-    void SetEnableFriction(bool enabled);
-
     // Render the scene with an interpolated time between the last frame and
     // the current simulation step.
     void Render(q3Render* render) const;
 
-    // Gets and sets the global gravity vector used during integration
-    const q3Vec3 GetGravity() const;
-    void SetGravity(const q3Vec3& gravity);
-
     // Removes all bodies from the scene.
     void Shutdown();
-
-    // Sets the listener to report collision start/end. Provides the user
-    // with a pointer to an q3ContactConstraint. The q3ContactConstraint
-    // holds pointers to the two shapes involved in a collision, and the
-    // two bodies connected to each shape. The q3ContactListener will be
-    // called very often, so it is recommended for the funciton to be very
-    // efficient. Provide a NULL pointer to remove the previously set
-    // listener.
-    void SetContactListener(q3ContactListener* listener);
 
     // Query the world to find any shapes that can potentially intersect
     // the provided AABB. This works by querying the broadphase with an
@@ -134,21 +132,6 @@ public:
     // accurate when dumped upon scene initialization, instead of mid-
     // simulation.
     void Dump(FILE* file) const;
-
-private:
-    q3ContactManager m_contactManager;
-    q3PagedAllocator m_boxAllocator;
-
-    i32 m_bodyCount;
-    q3Body* m_bodyList;
-
-    q3Vec3 m_gravity;
-    r32 m_dt;
-    i32 m_iterations;
-
-    bool m_newBox;
-    bool m_allowSleep;
-    bool m_enableFriction;
 
     friend class q3Body;
 };

@@ -23,7 +23,6 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include <cassert>
 #include <cstdio>
 
 #include "../math/q3Math.h"
@@ -87,7 +86,7 @@ void q3PagedAllocator::Free(void* data) {
     }
 
     // Address of data does not lie within any pages of this allocator.
-    assert(found);
+    debug::assert(found);
 #endif // DEBUG
 
     ((q3Block*)data)->next = m_freeList;

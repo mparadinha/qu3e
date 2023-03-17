@@ -23,9 +23,8 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include "q3Quaternion.h"
 #include "q3Mat3.h"
-#include <cassert>
+#include "q3Quaternion.h"
 
 q3Quaternion::q3Quaternion() {}
 
@@ -45,7 +44,7 @@ void q3Quaternion::Set(const q3Vec3& axis, r32 radians) {
 }
 
 void q3Quaternion::ToAxisAngle(q3Vec3* axis, r32* angle) const {
-    assert(w <= r32(1.0));
+    debug::assert(w <= r32(1.0));
 
     *angle = r32(2.0) * std::acos(w);
 

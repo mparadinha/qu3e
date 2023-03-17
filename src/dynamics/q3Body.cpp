@@ -95,15 +95,15 @@ const q3Box* q3Body::AddBox(const q3BoxDef& def) {
 
     CalculateMassData();
 
-    m_scene->m_contactManager.m_broadphase.InsertBox(box, aabb);
-    m_scene->m_newBox = true;
+    m_scene->contact_manager.m_broadphase.InsertBox(box, aabb);
+    m_scene->new_box = true;
 
     return box;
 }
 
 void q3Body::RemoveBox(const q3Box* box) {
-    assert(box);
-    assert(box->body == this);
+    debug::assert(box);
+    debug::assert(box->body == this);
 
     q3Box* node = m_boxes;
 
@@ -123,7 +123,7 @@ void q3Body::RemoveBox(const q3Box* box) {
     }
 
     // This shape was not connected to this body.
-    assert(found);
+    debug::assert(found);
 
     // Remove all contacts associated with this shape
     q3ContactEdge* edge = m_contactList;
@@ -134,27 +134,27 @@ void q3Body::RemoveBox(const q3Box* box) {
         q3Box* A = contact->A;
         q3Box* B = contact->B;
 
-        if (box == A || box == B) m_scene->m_contactManager.RemoveContact(contact);
+        if (box == A || box == B) m_scene->contact_manager.RemoveContact(contact);
     }
 
-    m_scene->m_contactManager.m_broadphase.RemoveBox(box);
+    m_scene->contact_manager.m_broadphase.RemoveBox(box);
 
     CalculateMassData();
 
-    m_scene->allocator.free(box);
+    m_scene->allocator.destroy(box);
 }
 
 void q3Body::RemoveAllBoxes() {
     while (m_boxes) {
         q3Box* next = m_boxes->next;
 
-        m_scene->m_contactManager.m_broadphase.RemoveBox(m_boxes);
-        m_scene->allocator.free(m_boxes);
+        m_scene->contact_manager.m_broadphase.RemoveBox(m_boxes);
+        m_scene->allocator.destroy(m_boxes);
 
         m_boxes = next;
     }
 
-    m_scene->m_contactManager.RemoveContactsFromBody(this);
+    m_scene->contact_manager.RemoveContactsFromBody(this);
 }
 
 void q3Body::ApplyLinearForce(const q3Vec3& force) {
@@ -252,7 +252,7 @@ const q3Vec3 q3Body::GetVelocityAtWorldPoint(const q3Vec3& p) const {
 
 void q3Body::SetLinearVelocity(const q3Vec3& v) {
     // Velocity of static bodies cannot be adjusted
-    if (m_flags & eStatic) assert(false);
+    if (m_flags & eStatic) debug::assert(false);
 
     if (q3Dot(v, v) > r32(0.0)) { SetToAwake(); }
 
@@ -265,7 +265,7 @@ const q3Vec3 q3Body::GetAngularVelocity() const {
 
 void q3Body::SetAngularVelocity(const q3Vec3 v) {
     // Velocity of static bodies cannot be adjusted
-    if (m_flags & eStatic) assert(false);
+    if (m_flags & eStatic) debug::assert(false);
 
     if (q3Dot(v, v) > r32(0.0)) { SetToAwake(); }
 
@@ -496,7 +496,7 @@ void q3Body::CalculateMassData() {
 }
 
 void q3Body::SynchronizeProxies() {
-    q3BroadPhase* broadphase = &m_scene->m_contactManager.m_broadphase;
+    q3BroadPhase* broadphase = &m_scene->contact_manager.m_broadphase;
 
     m_tx.position = m_worldCenter - q3Mul(m_tx.rotation, m_localCenter);
 

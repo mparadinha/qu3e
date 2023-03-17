@@ -83,14 +83,6 @@ set(qu3e_hdr
 	q3.h
 )
 
-# set(zig_style_files
-# 	zig_style/allocator.cpp
-# 	zig_style/array_list.cpp
-# 	zig_style/base.cpp
-# 	zig_style/builtin.cpp
-# 	zig_style/debug.cpp
-# )
-
 if(qu3e_build_shared)
 	add_library(qu3e_shared SHARED
 		${qu3e_broadphase_srcs}
@@ -107,7 +99,6 @@ if(qu3e_build_shared)
 		${qu3e_scene_srcs}
 		${qu3e_scene_hdrs}
 		${qu3e_hdr}
-		# ${zig_style_files}
 	)
 	
 	set_target_properties(qu3e_shared PROPERTIES
@@ -133,7 +124,6 @@ if(qu3e_build_static)
 		${qu3e_scene_srcs}
 		${qu3e_scene_hdrs}
 		${qu3e_hdr}
-		# ${zig_style_files}
 	)
 	
 	set_target_properties(qu3e PROPERTIES
@@ -151,4 +141,3 @@ source_group(dynamics FILES ${qu3e_dynamics_srcs} ${qu3e_dynamics_hdrs})
 source_group(math FILES ${qu3e_math_srcs} ${qu3e_math_hdrs})
 source_group(scene FILES ${qu3e_scene_srcs} ${qu3e_scene_hdrs})
 source_group(Include FILES ${qu3e_hdr})
-# source_group(zig_style FILES ${zig_style_files})

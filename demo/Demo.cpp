@@ -60,7 +60,7 @@ i32 lastDemo;
 Demo* demos[Q3_DEMO_MAX_COUNT];
 
 class Renderer : public q3Render {
-  public:
+public:
     void SetPenColor(f32 r, f32 g, f32 b, f32 a = 1.0f) override {
         Q3_UNUSED(a);
 
@@ -106,7 +106,7 @@ class Renderer : public q3Render {
         glEnd();
     };
 
-  private:
+private:
     f32 x_, y_, z_;
     f32 sx_, sy_, sz_;
     f32 nx_, ny_, nz_;
@@ -376,8 +376,8 @@ void MainLoop(void) {
     f32 time = g_clock.Start();
 
     scene.SetAllowSleep(enableSleep);
-    scene.SetEnableFriction(enableFriction);
-    scene.SetIterations(velocityIterations);
+    scene.enable_friction = enableFriction;
+    scene.iterations = intCast<usize>(velocityIterations);
 
     UpdateScene(time);
 

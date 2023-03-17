@@ -28,12 +28,10 @@ distribution.
 
 #include "../common/q3Geometry.h"
 #include "../common/q3Settings.h"
+#include "../dynamics/q3Body.h"
+#include "../dynamics/q3ContactManager.h"
+#include "../dynamics/q3ContactSolver.h"
 #include "../math/q3Math.h"
-
-class q3BroadPhase;
-class q3Body;
-struct q3ContactConstraint;
-struct q3ContactConstraintState;
 
 struct q3VelocityState {
     q3Vec3 w;
@@ -41,27 +39,44 @@ struct q3VelocityState {
 };
 
 struct q3Island {
+    ArrayList<q3Body*> bodies;
+    ArrayList<q3VelocityState> velocities;
+    ArrayList<q3ContactConstraint*> contacts;
+    ArrayList<q3ContactConstraintState> contact_states;
+    f32 dt;
+    q3Vec3 gravity;
+    usize iterations;
+    bool allow_sleep;
+    bool enable_friction;
+
+    static q3Island init(
+        Allocator allocator, f32 dt, q3Vec3 gravity, usize iterations, bool allow_sleep,
+        bool enable_friction
+    ) {
+        return q3Island{
+            .bodies = ArrayList<q3Body*>::init(allocator),
+            .velocities = ArrayList<q3VelocityState>::init(allocator),
+            .contacts = ArrayList<q3ContactConstraint*>::init(allocator),
+            .contact_states = ArrayList<q3ContactConstraintState>::init(allocator),
+            .dt = dt,
+            .gravity = gravity,
+            .iterations = iterations,
+            .allow_sleep = allow_sleep,
+            .enable_friction = enable_friction,
+        };
+    }
+
+    void deinit() {
+        this->bodies.deinit();
+        this->velocities.deinit();
+        this->contacts.deinit();
+        this->contact_states.deinit();
+    }
+
     void Solve();
     void Add(q3Body* body);
     void Add(q3ContactConstraint* contact);
     void Initialize();
-
-    q3Body** m_bodies;
-    q3VelocityState* m_velocities;
-    i32 m_bodyCapacity;
-    i32 m_bodyCount;
-
-    q3ContactConstraint** m_contacts;
-    q3ContactConstraintState* m_contactStates;
-    i32 m_contactCount;
-    i32 m_contactCapacity;
-
-    r32 m_dt;
-    q3Vec3 m_gravity;
-    i32 m_iterations;
-
-    bool m_allowSleep;
-    bool m_enableFriction;
 };
 
 #endif // Q3ISLAND_H

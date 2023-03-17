@@ -27,7 +27,6 @@ distribution.
 #define Q3MATH_H
 
 #include <algorithm> // max, min
-#include <cassert>   // assert
 #include <cmath>     // abs, sqrt
 #include <float.h>   // FLT_MAX
 

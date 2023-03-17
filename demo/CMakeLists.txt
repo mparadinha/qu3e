@@ -44,4 +44,7 @@ target_link_libraries(
 	imgui
 	${ADDITIONAL_LIBRARIES}
 	${OPENGL_LIBRARIES}
+	-lunwind
+	-ldw
+	-rdynamic
 )

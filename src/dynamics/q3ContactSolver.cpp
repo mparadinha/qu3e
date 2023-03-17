@@ -23,26 +23,26 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include "q3ContactSolver.h"
 #include "../common/q3Geometry.h"
 #include "../common/q3Memory.h"
 #include "../common/q3Settings.h"
 #include "q3Body.h"
 #include "q3Contact.h"
+#include "q3ContactSolver.h"
 #include "q3Island.h"
 
 void q3ContactSolver::Initialize(q3Island* island) {
     m_island = island;
-    m_contactCount = island->m_contactCount;
-    m_contacts = island->m_contactStates;
-    m_velocities = m_island->m_velocities;
-    m_enableFriction = island->m_enableFriction;
+    m_contactCount = island->contacts.items.len;
+    m_contacts = island->contact_states.items.ptr;
+    m_velocities = m_island->velocities.items.ptr;
+    m_enableFriction = island->enable_friction;
 }
 
 void q3ContactSolver::ShutDown(void) {
     for (i32 i = 0; i < m_contactCount; ++i) {
         q3ContactConstraintState* c = m_contacts + i;
-        q3ContactConstraint* cc = m_island->m_contacts[i];
+        q3ContactConstraint* cc = m_island->contacts.items[i];
 
         for (i32 j = 0; j < c->contactCount; ++j) {
             q3Contact* oc = cc->manifold.contacts + j;

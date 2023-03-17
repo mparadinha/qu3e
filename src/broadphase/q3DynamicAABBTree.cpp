@@ -23,9 +23,9 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include "q3DynamicAABBTree.h"
 #include "../common/q3Memory.h"
 #include "../debug/q3Render.h"
+#include "q3DynamicAABBTree.h"
 
 inline void FattenAABB(q3AABB& aabb) {
     const r32 k_fattener = r32(0.5);
@@ -64,16 +64,16 @@ i32 q3DynamicAABBTree::Insert(const q3AABB& aabb, void* userData) {
 }
 
 void q3DynamicAABBTree::Remove(i32 id) {
-    assert(id >= 0 && id < m_capacity);
-    assert(m_nodes[id].IsLeaf());
+    debug::assert(id >= 0 && id < m_capacity);
+    debug::assert(m_nodes[id].IsLeaf());
 
     RemoveLeaf(id);
     DeallocateNode(id);
 }
 
 bool q3DynamicAABBTree::Update(i32 id, const q3AABB& aabb) {
-    assert(id >= 0 && id < m_capacity);
-    assert(m_nodes[id].IsLeaf());
+    debug::assert(id >= 0 && id < m_capacity);
+    debug::assert(m_nodes[id].IsLeaf());
 
     if (m_nodes[id].aabb.Contains(aabb)) return false;
 
@@ -88,13 +88,13 @@ bool q3DynamicAABBTree::Update(i32 id, const q3AABB& aabb) {
 }
 
 void* q3DynamicAABBTree::GetUserData(i32 id) const {
-    assert(id >= 0 && id < m_capacity);
+    debug::assert(id >= 0 && id < m_capacity);
 
     return m_nodes[id].userData;
 }
 
 const q3AABB& q3DynamicAABBTree::GetFatAABB(i32 id) const {
-    assert(id >= 0 && id < m_capacity);
+    debug::assert(id >= 0 && id < m_capacity);
 
     return m_nodes[id].aabb;
 }
@@ -107,7 +107,7 @@ void q3DynamicAABBTree::Render(q3Render* render) const {
 }
 
 void q3DynamicAABBTree::RenderNode(q3Render* render, i32 index) const {
-    assert(index >= 0 && index < m_capacity);
+    debug::assert(index >= 0 && index < m_capacity);
 
     Node* n = m_nodes + index;
     const q3AABB& b = n->aabb;
@@ -147,16 +147,16 @@ void q3DynamicAABBTree::Validate() const {
     i32 index = m_freeList;
 
     while (index != Node::Null) {
-        assert(index >= 0 && index < m_capacity);
+        debug::assert(index >= 0 && index < m_capacity);
         index = m_nodes[index].next;
         ++freeNodes;
     }
 
-    assert(m_count + freeNodes == m_capacity);
+    debug::assert(m_count + freeNodes == m_capacity);
 
     // Validate tree structure
     if (m_root != Node::Null) {
-        assert(m_nodes[m_root].parent == Node::Null);
+        debug::assert(m_nodes[m_root].parent == Node::Null);
 
 #ifdef _DEBUG
         ValidateStructure(m_root);
@@ -171,18 +171,18 @@ void q3DynamicAABBTree::ValidateStructure(i32 index) const {
     i32 ir = n->right;
 
     if (n->IsLeaf()) {
-        assert(ir == Node::Null);
-        assert(n->height == 0);
+        debug::assert(ir == Node::Null);
+        debug::assert(n->height == 0);
         return;
     }
 
-    assert(il >= 0 && il < m_capacity);
-    assert(ir >= 0 && ir < m_capacity);
+    debug::assert(il >= 0 && il < m_capacity);
+    debug::assert(ir >= 0 && ir < m_capacity);
     Node* l = m_nodes + il;
     Node* r = m_nodes + ir;
 
-    assert(l->parent == index);
-    assert(r->parent == index);
+    debug::assert(l->parent == index);
+    debug::assert(r->parent == index);
 
     ValidateStructure(il);
     ValidateStructure(ir);

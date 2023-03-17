@@ -23,9 +23,9 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include "q3Collide.h"
 #include "../dynamics/q3Body.h"
 #include "../dynamics/q3Contact.h"
+#include "q3Collide.h"
 
 inline bool q3TrackFaceAxis(
     i32* axis, i32 n, r32 s, r32* sMax, const q3Vec3& normal, q3Vec3* axisNormal
@@ -262,7 +262,7 @@ i32 q3Orthographic(
 
         // B
         if (((InFront(da) && InFront(db)) || On(da) || On(db))) {
-            assert(outCount < 8);
+            debug::assert(outCount < 8);
             out[outCount++] = b;
         }
         // I
@@ -271,7 +271,7 @@ i32 q3Orthographic(
             cv.v = a.v + (b.v - a.v) * (da / (da - db));
             cv.f.outR = clipEdge;
             cv.f.outI = 0;
-            assert(outCount < 8);
+            debug::assert(outCount < 8);
             out[outCount++] = cv;
         }
         // I, B
@@ -280,10 +280,10 @@ i32 q3Orthographic(
             cv.v = a.v + (b.v - a.v) * (da / (da - db));
             cv.f.inR = clipEdge;
             cv.f.inI = 0;
-            assert(outCount < 8);
+            debug::assert(outCount < 8);
             out[outCount++] = cv;
 
-            assert(outCount < 8);
+            debug::assert(outCount < 8);
             out[outCount++] = b;
         }
 
@@ -330,7 +330,7 @@ i32 q3Clip(
         }
     }
 
-    assert(outCount <= 8);
+    debug::assert(outCount <= 8);
 
     return outCount;
 }
