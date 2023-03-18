@@ -23,9 +23,11 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include "../dynamics/q3Body.h"
-#include "../dynamics/q3Contact.h"
 #include "q3Collide.h"
+#include "../math/q3Math.h"
+#include "../math/q3Transform.h"
+#include "../dynamics/q3Contact.h"
+#include "../dynamics/q3Body.h"
 
 inline bool q3TrackFaceAxis(
     i32* axis, i32 n, r32 s, r32* sMax, const q3Vec3& normal, q3Vec3* axisNormal

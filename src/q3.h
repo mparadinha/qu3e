@@ -23,8 +23,7 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3_H
-#define Q3_H
+#pragma once
 
 #include "collision/q3Box.h"
 #include "common/q3Types.h"
@@ -35,5 +34,3 @@ distribution.
 #include "math/q3Transform.h"
 #include "math/q3Vec3.h"
 #include "scene/q3Scene.h"
-
-#endif // Q3_H

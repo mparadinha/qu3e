@@ -23,14 +23,11 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3CONTACTSOLVER_H
-#define Q3CONTACTSOLVER_H
+#pragma once
 
 #include "../common/q3Settings.h"
+#include "../dynamics/q3Island.h"
 #include "../math/q3Math.h"
-
-struct q3Island;
-struct q3VelocityState;
 
 struct q3ContactState {
     q3Vec3 ra;             // Vector from C.O.M to contact position
@@ -74,5 +71,3 @@ struct q3ContactSolver {
 
     bool m_enableFriction;
 };
-
-#endif // Q3CONTACTSOLVER_H

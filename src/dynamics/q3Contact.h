@@ -23,17 +23,12 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3CONTACT_H
-#define Q3CONTACT_H
+#pragma once
 
 #include "../collision/q3Box.h"
 #include "../collision/q3Collide.h"
 #include "../common/q3Settings.h"
 #include "../math/q3Math.h"
-
-class q3Body;
-struct q3Box;
-struct q3ContactConstraint;
 
 inline r32 q3MixRestitution(const q3Box* A, const q3Box* B) {
     return q3Max(A->restitution, B->restitution);
@@ -83,6 +78,8 @@ struct q3Manifold {
     bool sensor;
 };
 
+struct q3ContactConstraint; // what a mess
+
 struct q3ContactEdge {
     q3Body* other;
     q3ContactConstraint* constraint;
@@ -113,11 +110,4 @@ struct q3ContactConstraint {
     };
 
     i32 m_flags;
-
-    friend class q3ContactManager;
-    friend class q3Scene;
-    friend struct q3Island;
-    friend struct q3ContactSolver;
 };
-
-#endif // Q3CONTACT_H

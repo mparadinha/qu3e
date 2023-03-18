@@ -23,8 +23,7 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3BOX_H
-#define Q3BOX_H
+#pragma once
 
 #include "../debug/q3Render.h"
 #include "../math/q3Mat3.h"
@@ -61,8 +60,7 @@ struct q3Box {
     void Render(const q3Transform& tx, bool awake, q3Render* render) const;
 };
 
-class q3BoxDef {
-  public:
+struct q3BoxDef {
     q3BoxDef() {
         // Common default values
         m_friction = r32(0.4);
@@ -78,7 +76,6 @@ class q3BoxDef {
     void SetDensity(r32 density);
     void SetSensor(bool sensor);
 
-  private:
     q3Transform m_tx;
     q3Vec3 m_e;
 
@@ -86,10 +83,33 @@ class q3BoxDef {
     r32 m_restitution;
     r32 m_density;
     bool m_sensor;
-
-    friend class q3Body;
 };
 
-#include "q3Box.inl"
+inline void q3Box::SetUserdata(void* data) const {
+    userData = data;
+}
 
-#endif // Q3BOX_H
+inline void* q3Box::GetUserdata() const {
+    return userData;
+}
+
+inline void q3BoxDef::Set(const q3Transform& tx, const q3Vec3& extents) {
+    m_tx = tx;
+    m_e = extents * r32(0.5);
+}
+
+inline void q3BoxDef::SetRestitution(r32 restitution) {
+    m_restitution = restitution;
+}
+
+inline void q3BoxDef::SetFriction(r32 friction) {
+    m_friction = friction;
+}
+
+inline void q3BoxDef::SetDensity(r32 density) {
+    m_density = density;
+}
+
+inline void q3BoxDef::SetSensor(bool sensor) {
+    m_sensor = sensor;
+}

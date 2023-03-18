@@ -40,7 +40,7 @@ void q3Island::Solve() {
         if (body->HasFlag(q3Body::eDynamic)) {
             body->ApplyLinearForce(gravity * body->m_gravityScale);
 
-            // Calculate world space intertia tensor
+            // Calculate world space inertia tensor
             q3Mat3 r = body->m_tx.rotation;
             body->m_invInertiaWorld = r * body->m_invInertiaModel * q3Transpose(r);
 

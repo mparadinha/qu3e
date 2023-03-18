@@ -23,8 +23,7 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3MEMORY_H
-#define Q3MEMORY_H
+#pragma once
 
 #include <stdlib.h>
 
@@ -43,7 +42,7 @@ inline void q3Free(void* memory) {
 const i32 q3k_heapSize = 1024 * 1024 * 20;
 const i32 q3k_heapInitialCapacity = 1024;
 
-class q3PagedAllocator {
+struct q3PagedAllocator {
     struct q3Block {
         q3Block* next;
     };
@@ -53,7 +52,6 @@ class q3PagedAllocator {
         q3Block* data;
     };
 
-public:
     q3PagedAllocator(i32 elementSize, i32 elementsPerPage);
     ~q3PagedAllocator();
 
@@ -62,7 +60,6 @@ public:
 
     void Clear();
 
-private:
     i32 m_blockSize;
     i32 m_blocksPerPage;
 
@@ -71,5 +68,3 @@ private:
 
     q3Block* m_freeList;
 };
-
-#endif // Q3MEMORY_H

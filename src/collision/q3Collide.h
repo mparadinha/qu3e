@@ -23,13 +23,8 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3COLLIDE_H
-#define Q3COLLIDE_H
+#pragma once
 
-#include "q3Box.h"
-
-struct q3Manifold;
+#include "../common/q3Types.h"
 
 void q3BoxtoBox(q3Manifold* m, q3Box* a, q3Box* b);
-
-#endif // Q3COLLIDE_H

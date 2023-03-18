@@ -23,8 +23,7 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3ISLAND_H
-#define Q3ISLAND_H
+#pragma once
 
 #include "../common/q3Geometry.h"
 #include "../common/q3Settings.h"
@@ -78,5 +77,3 @@ struct q3Island {
     void Add(q3ContactConstraint* contact);
     void Initialize();
 };
-
-#endif // Q3ISLAND_H

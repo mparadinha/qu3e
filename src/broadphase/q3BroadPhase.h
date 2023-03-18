@@ -23,25 +23,18 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3BROADPHASE_H
-#define Q3BROADPHASE_H
+#pragma once
 
-#include "../common/q3Memory.h"
 #include "../common/q3Types.h"
+#include "../common/q3Memory.h"
 #include "q3DynamicAABBTree.h"
-
-class q3ContactManager;
-struct q3Box;
-struct q3Transform;
-struct q3AABB;
 
 struct q3ContactPair {
     i32 A;
     i32 B;
 };
 
-class q3BroadPhase {
-  public:
+struct q3BroadPhase {
     q3BroadPhase(q3ContactManager* manager);
     ~q3BroadPhase();
 
@@ -56,7 +49,6 @@ class q3BroadPhase {
 
     bool TestOverlap(i32 A, i32 B) const;
 
-  private:
     q3ContactManager* m_manager;
 
     q3ContactPair* m_pairBuffer;
@@ -72,9 +64,6 @@ class q3BroadPhase {
 
     void BufferMove(i32 id);
     bool TreeCallBack(i32 index);
-
-    friend class q3DynamicAABBTree;
-    friend class q3Scene;
 };
 
 inline bool q3BroadPhase::TreeCallBack(i32 index) {
@@ -98,5 +87,3 @@ inline bool q3BroadPhase::TreeCallBack(i32 index) {
 
     return true;
 }
-
-#endif // Q3BROADPHASE_H

@@ -23,8 +23,7 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3SETTINGS_H
-#define Q3SETTINGS_H
+#pragma once
 
 #include "../math/q3Math.h"
 #define Q3_SLEEP_LINEAR r32(0.01)
@@ -36,5 +35,3 @@ distribution.
 #define Q3_BAUMGARTE r32(0.2)
 
 #define Q3_PENETRATION_SLOP r32(0.05)
-
-#endif // Q3SETTINGS_H

@@ -23,8 +23,7 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3TRANSFORM_H
-#define Q3TRANSFORM_H
+#pragma once
 
 #include "../common/q3Geometry.h"
 #include "q3Math.h"
@@ -34,6 +33,83 @@ struct q3Transform {
     q3Mat3 rotation;
 };
 
-#include "q3Transform.inl"
+inline const q3Vec3 q3Mul(const q3Transform& tx, const q3Vec3& v) {
+    return q3Vec3(tx.rotation * v + tx.position);
+}
 
-#endif // Q3TRANSFORM_H
+inline const q3Vec3 q3Mul(const q3Transform& tx, const q3Vec3& scale, const q3Vec3& v) {
+    return q3Vec3(tx.rotation * q3Mul(scale, v) + tx.position);
+}
+
+inline const q3Vec3 q3Mul(const q3Transform* tx, const q3Vec3& v) {
+    return q3Vec3(tx->rotation * v + tx->position);
+}
+
+inline const q3Vec3 q3Mul(const q3Mat3& r, const q3Vec3& v) {
+    return r * v;
+}
+
+inline const q3Mat3 q3Mul(const q3Mat3& r, const q3Mat3& q) {
+    return r * q;
+}
+
+inline const q3Transform q3Mul(const q3Transform& t, const q3Transform& u) {
+    q3Transform v;
+    v.rotation = q3Mul(t.rotation, u.rotation);
+    v.position = q3Mul(t.rotation, u.position) + t.position;
+    return v;
+}
+
+inline const q3HalfSpace q3Mul(const q3Transform& tx, const q3HalfSpace& p) {
+    q3Vec3 origin = p.Origin();
+    origin = q3Mul(tx, origin);
+    q3Vec3 normal = q3Mul(tx.rotation, p.normal);
+
+    return q3HalfSpace(normal, q3Dot(origin, normal));
+}
+
+inline const q3HalfSpace q3Mul(const q3Transform& tx, const q3Vec3& scale, const q3HalfSpace& p) {
+    q3Vec3 origin = p.Origin();
+    origin = q3Mul(tx, scale, origin);
+    q3Vec3 normal = q3Mul(tx.rotation, p.normal);
+
+    return q3HalfSpace(normal, q3Dot(origin, normal));
+}
+
+inline const q3Vec3 q3MulT(const q3Transform& tx, const q3Vec3& v) {
+    return q3Transpose(tx.rotation) * (v - tx.position);
+}
+
+inline const q3Vec3 q3MulT(const q3Mat3& r, const q3Vec3& v) {
+    return q3Transpose(r) * v;
+}
+
+inline const q3Mat3 q3MulT(const q3Mat3& r, const q3Mat3& q) {
+    return q3Transpose(r) * q;
+}
+
+inline const q3Transform q3MulT(const q3Transform& t, const q3Transform& u) {
+    q3Transform v;
+    v.rotation = q3MulT(t.rotation, u.rotation);
+    v.position = q3MulT(t.rotation, u.position - t.position);
+    return v;
+}
+
+inline const q3HalfSpace q3MulT(const q3Transform& tx, const q3HalfSpace& p) {
+    q3Vec3 origin = p.normal * p.distance;
+    origin = q3MulT(tx, origin);
+    q3Vec3 n = q3MulT(tx.rotation, p.normal);
+    return q3HalfSpace(n, q3Dot(origin, n));
+}
+
+inline void q3Identity(q3Transform& tx) {
+    q3Identity(tx.position);
+    q3Identity(tx.rotation);
+}
+
+inline const q3Transform q3Inverse(const q3Transform& tx) {
+    q3Transform inverted;
+    inverted.rotation = q3Transpose(tx.rotation);
+    inverted.position = q3Mul(inverted.rotation, -tx.position);
+    return inverted;
+}

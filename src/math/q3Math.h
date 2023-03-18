@@ -23,23 +23,90 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3MATH_H
-#define Q3MATH_H
+#pragma once
 
 #include <algorithm> // max, min
 #include <cmath>     // abs, sqrt
 #include <float.h>   // FLT_MAX
 
 #include "../common/q3Types.h"
+#include "q3Mat3.h"
+#include "q3Quaternion.h"
+#include "q3Vec3.h"
 
 #define Q3_R32_MAX FLT_MAX
 
 const r32 q3PI = r32(3.14159265);
 
-#include "q3Mat3.h"
-#include "q3Quaternion.h"
-#include "q3Vec3.h"
+inline r32 q3Invert(r32 a) {
+    return a != 0.0f ? 1.0f / a : 0.0f;
+}
 
-#include "q3Math.inl"
+inline r32 q3Sign(r32 a) {
+    if (a >= r32(0.0)) {
+        return r32(1.0);
+    } else {
+        return r32(-1.0);
+    }
+}
 
-#endif // Q3MATH_H
+inline r32 q3Abs(r32 a) {
+    if (a < r32(0.0)) return -a;
+    return a;
+}
+
+inline i32 q3Min(i32 a, i32 b) {
+    if (a < b) return a;
+    return b;
+}
+
+inline r32 q3Min(r32 a, r32 b) {
+    if (a < b) return a;
+    return b;
+}
+
+inline r32 q3Max(r32 a, r32 b) {
+    if (a > b) return a;
+    return b;
+}
+
+inline i32 q3Max(i32 a, i32 b) {
+    if (a > b) return a;
+    return b;
+}
+
+inline u8 q3Max(u8 a, u8 b) {
+    if (a > b) return a;
+    return b;
+}
+
+inline r32 q3Clamp01(r32 val) {
+    if (val >= r32(1.0)) return 1.0;
+    if (val <= r32(0.0)) return 0.0;
+    return val;
+}
+
+inline r32 q3Clamp(r32 min, r32 max, r32 a) {
+    if (a < min) return min;
+    if (a > max) return max;
+    return a;
+}
+
+inline r32 q3Lerp(r32 a, r32 b, r32 t) {
+    return a * (r32(1.0) - t) + b * t;
+}
+
+inline const q3Vec3 q3Lerp(const q3Vec3& a, const q3Vec3& b, r32 t) {
+    return a * (r32(1.0) - t) + b * t;
+}
+
+inline r32 q3RandomFloat(r32 l, r32 h) {
+    r32 a = r32(rand());
+    a /= r32(RAND_MAX);
+    a = (h - l) * a + l;
+    return a;
+}
+
+inline i32 q3RandomInt(i32 low, i32 high) {
+    return (rand() % (high - low + 1) + low);
+}

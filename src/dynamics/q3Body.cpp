@@ -23,11 +23,11 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include "../broadphase/q3BroadPhase.h"
+#include "q3Body.h"
 #include "../collision/q3Box.h"
 #include "../scene/q3Scene.h"
-#include "q3Body.h"
-#include "q3Contact.h"
+#include "../dynamics/q3Contact.h"
+#include "../broadphase/q3BroadPhase.h"
 
 q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
     m_linearVelocity = def.linearVelocity;
@@ -215,14 +215,6 @@ r32 q3Body::GetInvMass() const {
     return m_invMass;
 }
 
-r32 q3Body::GetGravityScale() const {
-    return m_gravityScale;
-}
-
-void q3Body::SetGravityScale(r32 scale) {
-    m_gravityScale = scale;
-}
-
 const q3Vec3 q3Body::GetLocalPoint(const q3Vec3& p) const {
     return q3MulT(m_tx, p);
 }
@@ -301,10 +293,6 @@ void q3Body::SetTransform(const q3Vec3& position, const q3Vec3& axis, r32 angle)
     SynchronizeProxies();
 }
 
-i32 q3Body::GetFlags() const {
-    return m_flags;
-}
-
 void q3Body::SetLayers(i32 layers) {
     m_layers = layers;
 }
@@ -319,22 +307,6 @@ const q3Quaternion q3Body::GetQuaternion() const {
 
 void* q3Body::GetUserData() const {
     return m_userData;
-}
-
-void q3Body::SetLinearDamping(r32 damping) {
-    m_linearDamping = damping;
-}
-
-r32 q3Body::GetLinearDamping(r32 damping) const {
-    return m_linearDamping;
-}
-
-void q3Body::SetAngularDamping(r32 damping) {
-    m_angularDamping = damping;
-}
-
-r32 q3Body::GetAngularDamping(r32 damping) const {
-    return m_angularDamping;
 }
 
 void q3Body::Render(q3Render* render) const {

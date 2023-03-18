@@ -23,16 +23,13 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3QUATERNION_H
-#define Q3QUATERNION_H
+#pragma once
 
 #include "../common/q3Types.h"
+#include "q3Mat3.h"
 #include "q3Vec3.h"
 
-struct q3Mat3;
-
-class q3Quaternion {
-  public:
+struct q3Quaternion {
     union {
         r32 v[4];
 
@@ -80,5 +77,3 @@ inline const q3Quaternion q3Normalize(const q3Quaternion& q) {
 
     return q3Quaternion(x, y, z, w);
 }
-
-#endif // Q3QUATERNION_H

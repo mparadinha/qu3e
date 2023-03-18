@@ -23,8 +23,7 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3TYPES_H
-#define Q3TYPES_H
+#pragma once
 
 typedef float r32;
 typedef double r64;
@@ -39,7 +38,40 @@ typedef unsigned int u32;
 
 #define Q3_UNUSED(A) (void)A
 
-// zig style stuff
+// forward declare all the types here because this is a mess
+struct q3AABB;
+struct q3Body;
+struct q3BodyDef;
+struct q3Box;
+struct q3BoxDef;
+struct q3BroadPhase;
+struct q3ClipVertex;
+struct q3Contact;
+struct q3ContactConstraint;
+struct q3ContactConstraintState;
+struct q3ContactEdge;
+struct q3ContactListener;
+struct q3ContactManager;
+struct q3ContactPair;
+struct q3ContactSolver;
+struct q3ContactState;
+struct q3DynamicAABBTree;
+struct q3HalfSpace;
+struct q3Island;
+struct q3Manifold;
+struct q3MassData;
+struct q3Mat3;
+struct q3PagedAllocator;
+struct q3Quaternion;
+struct q3QueryCallback;
+struct q3RaycastData;
+struct q3Render;
+struct q3Scene;
+struct q3Transform;
+struct q3Vec3;
+struct q3VelocityState;
+
+// below is the zig style stuff
 
 #ifdef assert
 #undef assert
@@ -57,5 +89,3 @@ typedef unsigned int u32;
 #ifdef assert_was_already_defined
 constexpr auto assert = debug::assert;
 #endif
-
-#endif // Q3TYPES_H

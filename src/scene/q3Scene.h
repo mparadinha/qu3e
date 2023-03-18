@@ -23,38 +23,22 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3SCENE_H
-#define Q3SCENE_H
+#pragma once
 
 #include <stdio.h>
 
-#include "../common/q3Memory.h"
-#include "../common/q3Settings.h"
+#include "../common/q3Types.h"
+#include "../math/q3Math.h"
 #include "../dynamics/q3ContactManager.h"
+#include "../common/q3Memory.h"
 
-class q3Body;
-struct q3BodyDef;
-struct q3ContactConstraint;
-class q3Render;
-struct q3Island;
-
-class q3ContactListener {
-public:
-    virtual ~q3ContactListener() {}
-
-    virtual void BeginContact(const q3ContactConstraint* contact) = 0;
-    virtual void EndContact(const q3ContactConstraint* contact) = 0;
-};
-
-class q3QueryCallback {
-public:
+struct q3QueryCallback {
     virtual ~q3QueryCallback() {}
 
     virtual bool ReportShape(q3Box* box) = 0;
 };
 
-class q3Scene {
-public:
+struct q3Scene {
     Allocator allocator;
     q3Vec3 gravity;
     usize body_count;
@@ -106,10 +90,6 @@ public:
     // touched by something that wakes them up. The default is enabled.
     void SetAllowSleep(bool allowSleep);
 
-    // Render the scene with an interpolated time between the last frame and
-    // the current simulation step.
-    void Render(q3Render* render) const;
-
     // Removes all bodies from the scene.
     void Shutdown();
 
@@ -125,6 +105,10 @@ public:
     // Query the world to find any shapes intersecting a ray.
     void RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) const;
 
+    // Render the scene with an interpolated time between the last frame and
+    // the current simulation step.
+    void Render(q3Render* render) const;
+
     // Dump all rigid bodies and shapes into a log file. The log can be
     // used as C++ code to re-create an initial scene setup. Contacts
     // are *not* logged, meaning any cached resolution solutions will
@@ -132,8 +116,4 @@ public:
     // accurate when dumped upon scene initialization, instead of mid-
     // simulation.
     void Dump(FILE* file) const;
-
-    friend class q3Body;
 };
-
-#endif // Q3SCENE_H

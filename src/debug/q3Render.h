@@ -23,13 +23,11 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3RENDER_H
-#define Q3RENDER_H
+#pragma once
 
 #include "../common/q3Types.h"
 
-class q3Render {
-  public:
+struct q3Render {
     virtual void SetPenColor(f32 r, f32 g, f32 b, f32 a = 1.0f) = 0;
     virtual void SetPenPosition(f32 x, f32 y, f32 z) = 0;
     virtual void SetScale(f32 sx, f32 sy, f32 sz) = 0;
@@ -48,5 +46,3 @@ class q3Render {
     // Draw a point with the scale from SetScale
     virtual void Point() = 0;
 };
-
-#endif // Q3RENDER_H

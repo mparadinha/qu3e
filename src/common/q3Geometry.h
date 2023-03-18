@@ -23,8 +23,7 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3GEOMETRY_H
-#define Q3GEOMETRY_H
+#pragma once
 
 #include "../math/q3Math.h"
 
@@ -69,6 +68,62 @@ struct q3RaycastData {
     const q3Vec3 GetImpactPoint() const;
 };
 
-#include "q3Geometry.inl"
+inline void q3ComputeBasis(const q3Vec3& a, q3Vec3* __restrict b, q3Vec3* __restrict c) {
 
-#endif // Q3GEOMETRY_H
+    if (q3Abs(a.x) >= r32(0.57735027))
+        b->Set(a.y, -a.x, r32(0.0));
+    else
+        b->Set(r32(0.0), a.z, -a.y);
+
+    *b = q3Normalize(*b);
+    *c = q3Cross(a, *b);
+}
+
+inline bool q3AABBtoAABB(const q3AABB& a, const q3AABB& b) {
+    if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
+
+    if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
+
+    if (a.max.z < b.min.z || a.min.z > b.max.z) return false;
+
+    return true;
+}
+
+inline bool q3AABB::Contains(const q3AABB& other) const {
+    return min.x <= other.min.x && min.y <= other.min.y && min.z <= other.min.z &&
+           max.x >= other.max.x && max.y >= other.max.y && max.z >= other.max.z;
+}
+
+inline bool q3AABB::Contains(const q3Vec3& point) const {
+    return min.x <= point.x && min.y <= point.y && min.z <= point.z && max.x >= point.x &&
+           max.y >= point.y && max.z >= point.z;
+}
+
+inline r32 q3AABB::SurfaceArea() const {
+    r32 x = max.x - min.x;
+    r32 y = max.y - min.y;
+    r32 z = max.z - min.z;
+
+    return r32(2.0) * (x * y + x * z + y * z);
+}
+
+inline const q3AABB q3Combine(const q3AABB& a, const q3AABB& b) {
+    q3AABB c;
+
+    c.min = q3Min(a.min, b.min);
+    c.max = q3Max(a.max, b.max);
+
+    return c;
+}
+
+inline void q3RaycastData::Set(
+    const q3Vec3& startPoint, const q3Vec3& direction, r32 endPointTime
+) {
+    start = startPoint;
+    dir = direction;
+    t = endPointTime;
+}
+
+inline const q3Vec3 q3RaycastData::GetImpactPoint() const {
+    return q3Vec3(start + dir * toi);
+}

@@ -23,22 +23,20 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef Q3CONTACTMANAGER_H
-#define Q3CONTACTMANAGER_H
+#pragma once
 
-#include "../broadphase/q3BroadPhase.h"
-#include "../common/q3Memory.h"
 #include "../common/q3Types.h"
+#include "../common/q3Memory.h"
+#include "../broadphase/q3BroadPhase.h"
 
-struct q3ContactConstraint;
-class q3ContactListener;
-struct q3Box;
-class q3Body;
-class q3Render;
-class q3Stack;
+struct q3ContactListener {
+    virtual ~q3ContactListener() {}
 
-class q3ContactManager {
-public:
+    virtual void BeginContact(const q3ContactConstraint* contact) = 0;
+    virtual void EndContact(const q3ContactConstraint* contact) = 0;
+};
+
+struct q3ContactManager {
     q3ContactManager();
 
     // Add a new contact constraint for a pair of objects
@@ -63,17 +61,9 @@ public:
 
     void RenderContacts(q3Render* debugDrawer) const;
 
-private:
     q3ContactConstraint* m_contactList;
     i32 m_contactCount;
     q3PagedAllocator m_allocator;
     q3BroadPhase m_broadphase;
     q3ContactListener* m_contactListener;
-
-    friend class q3BroadPhase;
-    friend class q3Scene;
-    friend struct q3Box;
-    friend class q3Body;
 };
-
-#endif // Q3CONTACTMANAGER_H
