@@ -138,17 +138,14 @@ struct q3Body {
     void CalculateMassData();
     void SynchronizeProxies();
 
-    // Adds a box to this body. Boxes are all defined in local space
-    // of their owning body. Boxes cannot be defined relative to one
-    // another. The body will recalculate its mass values. No contacts
-    // will be created until the next q3Scene::Step( ) call.
+    // Boxes are all defined in local space of their owning body.
+    // Boxes cannot be defined relative to one another.
+    // The body will recalculate its mass values.
+    // No contacts will be created until the next q3Scene::Step() call.
     const q3Box* AddBox(const q3BoxDef& def);
-
-    // Removes this box from the body and broadphase. Forces the body
-    // to recompute its mass if the body is dynamic. Frees the memory
-    // pointed to by the box pointer.
+    // Removes this box from the body and broadphase.
+    // Forces the body to recompute its mass if the body is dynamic.
     void RemoveBox(const q3Box* box);
-
     // Removes all boxes from this body and the broadphase.
     void RemoveAllBoxes();
 
@@ -170,7 +167,7 @@ struct q3Body {
 
     // Manipulating the transformation of a body manually will result in
     // non-physical behavior. Contacts are updated upon the next call to
-    // q3Scene::Step( ). Parameters are in world space. All body types
+    // q3Scene::Step(). Parameters are in world space. All body types
     // can be updated.
     void SetTransform(const q3Vec3& position);
     void SetTransform(const q3Vec3& position, const q3Vec3& axis, r32 angle);
@@ -179,5 +176,5 @@ struct q3Body {
 
     void UnsetFlag(Flag flag) { this->m_flags &= ~flag; }
 
-    bool HasFlag(Flag flag) { return this->m_flags & flag; }
+    bool HasFlag(Flag flag) const { return this->m_flags & flag; }
 };

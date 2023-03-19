@@ -129,6 +129,12 @@ struct Opt {
         debug::assert(this->maybe);
         return this->value;
     }
+
+    bool operator==(Opt<T> other) {
+        if (!this->maybe and !other.maybe) return true; // both Null
+        if (!this->maybe or !other.maybe) return false; // one of them is Null
+        return this->value == other.value;
+    }
 };
 
 // if you want `orelse_case` to be a whole block put it between `({` and `})`

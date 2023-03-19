@@ -83,4 +83,10 @@ struct LinkedList {
     };
 
     Iterator iter() const { return Iterator{.cur_node = this->head}; }
+
+    struct PtrIterator : Iterator {
+        T* operator*() const { return &this->cur_node.unwrap()->data; }
+    };
+
+    PtrIterator ptrIter() { return PtrIterator{.cur_node = this->head}; }
 };
