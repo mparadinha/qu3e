@@ -94,7 +94,7 @@ const q3Box* q3Body::AddBox(const q3BoxDef& def) {
     return box;
 }
 
-void q3Body::RemoveBox(const q3Box* box) {
+void q3Body::RemoveBox(q3Box* box) {
     debug::assert(box);
     debug::assert(box->body == this);
 

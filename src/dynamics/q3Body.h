@@ -146,7 +146,7 @@ struct q3Body {
     const q3Box* AddBox(const q3BoxDef& def);
     // Removes this box from the body and broadphase.
     // Forces the body to recompute its mass if the body is dynamic.
-    void RemoveBox(const q3Box* box);
+    void RemoveBox(q3Box* box);
     // Removes all boxes from this body and the broadphase.
     void RemoveAllBoxes();
 
