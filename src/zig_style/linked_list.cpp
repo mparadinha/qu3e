@@ -79,7 +79,7 @@ struct LinkedList {
             return *this;
         }
 
-        T& operator*() const { return this->cur_node.unwrap()->data; }
+        T operator*() const { return this->cur_node.unwrap()->data; }
     };
 
     Iterator iter() const { return Iterator{.cur_node = this->head}; }
