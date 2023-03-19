@@ -40,13 +40,14 @@ q3Scene::q3Scene(r32 dt, const q3Vec3& gravity, usize iterations) :
     bodies(LinkedList<q3Body>::init(allocator)),
     gravity(gravity),
     dt(dt),
-    iterations(iterations),
     new_box(false),
     allow_sleep(true),
-    enable_friction(true) {}
+    enable_friction(true),
+    iterations(iterations) {}
 
 q3Scene::~q3Scene() {
-    Shutdown();
+    RemoveAllBodies();
+    box_allocator.Clear();
 }
 
 void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 stackSize) {
@@ -189,11 +190,6 @@ void q3Scene::SetAllowSleep(bool allowSleep) {
     }
 }
 
-void q3Scene::Shutdown() {
-    RemoveAllBodies();
-    box_allocator.Clear();
-}
-
 void q3Scene::QueryAABB(q3QueryCallback* cb, const q3AABB& aabb) const {
     struct SceneQueryWrapper {
         bool TreeCallBack(i32 id) {
@@ -223,9 +219,7 @@ void q3Scene::QueryPoint(q3QueryCallback* cb, const q3Vec3& point) const {
     struct SceneQueryWrapper {
         bool TreeCallBack(i32 id) {
             q3Box* box = (q3Box*)broadPhase->m_tree.GetUserData(id);
-
             if (box->TestPoint(box->body->m_tx, m_point)) { cb->ReportShape(box); }
-
             return true;
         }
 
@@ -295,7 +289,7 @@ void q3Scene::Render(q3Render* render) const {
         }
     }
 
-    for (q3ContactConstraint contact : contact_manager.contacts.iter()) {
+    for (auto contact : contact_manager.contacts.iter()) {
         if (!(contact.m_flags & q3ContactConstraint::eColliding)) continue;
         q3Manifold m = contact.manifold;
         for (i32 j = 0; j < m.contactCount; ++j) {

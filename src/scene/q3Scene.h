@@ -40,13 +40,13 @@ struct q3QueryCallback {
 
 struct q3Scene {
     Allocator allocator;
+    r32 dt;
     q3Vec3 gravity;
     bool new_box;
     bool allow_sleep;
     // Friction occurs when two rigid bodies have shapes that slide along one
     // another. The friction force resists this sliding motion.
     bool enable_friction;
-    r32 dt;
     // Increasing the iteration count increases the CPU cost of simulating
     // Scene.Step(). Decreasing the iterations makes the simulation less
     // realistic (convergent). A good iteration number range is 5 to 20.
@@ -71,9 +71,8 @@ struct q3Scene {
     // discretion, as no reference to the BodyDef is kept.
     q3Body* CreateBody(const q3BodyDef& def);
 
-    // Frees a body, removes all shapes associated with the body and frees
-    // all shapes and contacts associated and attached to this body.
     void RemoveBody(q3Body* body);
+
     void RemoveAllBodies();
 
     // Enables or disables rigid body sleeping. Sleeping is an effective CPU
@@ -81,9 +80,6 @@ struct q3Scene {
     // Sleeping bodies sit in memory without being updated, until the are
     // touched by something that wakes them up. The default is enabled.
     void SetAllowSleep(bool allowSleep);
-
-    // Removes all bodies from the scene.
-    void Shutdown();
 
     // Query the world to find any shapes that can potentially intersect
     // the provided AABB. This works by querying the broadphase with an

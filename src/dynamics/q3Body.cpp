@@ -73,7 +73,7 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
 
 const q3Box* q3Body::AddBox(const q3BoxDef& def) {
     q3AABB aabb;
-    q3Box* box = m_scene->allocator.create<q3Box>().value;
+    q3Box* box = m_scene->allocator.create<q3Box>().unwrap();
     box->local = def.m_tx;
     box->e = def.m_e;
     box->next = m_boxes;
@@ -119,15 +119,11 @@ void q3Body::RemoveBox(q3Box* box) {
     debug::assert(found);
 
     // Remove all contacts associated with this shape
-    q3ContactEdge* edge = contact_edge_list;
-    while (edge) {
-        q3ContactConstraint* contact = edge->constraint;
-        edge = edge->next;
-
-        q3Box* A = contact->A;
-        q3Box* B = contact->B;
-
-        if (box == A || box == B) m_scene->contact_manager.RemoveContact(contact);
+    for (auto edge = contact_edge_list; edge; edge = edge->next) {
+        auto contact = edge->constraint;
+        if (box == contact->A || box == contact->B) {
+            m_scene->contact_manager.RemoveContact(contact);
+        }
     }
 
     m_scene->contact_manager.m_broadphase.RemoveBox(box);

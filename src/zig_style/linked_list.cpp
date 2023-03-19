@@ -46,6 +46,16 @@ struct LinkedList {
     // if `node` does not belong to this list this will hopefully crash, but it might
     // invoke undefined behavior instead, who knows (good luck)
     void remove(Node* node) {
+        // @debug: this makes remove ops O(n). check that node belong to this list
+        bool found = false;
+        for (auto opt_node = this->head; opt_node.maybe; opt_node = opt_node.unwrap()->next) {
+            if (opt_node.unwrap() == node) {
+                found = true;
+                break;
+            }
+        }
+        debug::assert(found);
+
         if (node->prev.is_not_null()) { node->prev.unwrap()->next = node->next; }
         if (node->next.is_not_null()) { node->next.unwrap()->prev = node->prev; }
         if (this->head.is_not_null() and this->head.unwrap() == node) { this->head = node->next; }

@@ -28,6 +28,7 @@ distribution.
 #include "../common/q3Types.h"
 #include "../common/q3Memory.h"
 #include "../broadphase/q3BroadPhase.h"
+#include "../dynamics/q3Contact.h"
 
 struct q3ContactManager {
     q3ContactManager(Allocator allocator);
@@ -50,7 +51,6 @@ struct q3ContactManager {
     // Remove contacts without broadphase overlap
     // Solves contact manifolds
     void TestCollisions(void);
-    static void SolveCollision(void* param);
 
     LinkedList<q3ContactConstraint> contacts;
     q3PagedAllocator m_allocator;

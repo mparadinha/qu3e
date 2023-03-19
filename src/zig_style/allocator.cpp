@@ -25,6 +25,9 @@ struct Allocator {
     ErrOr<T*> create() {
         T* ptr = (T*)malloc(sizeof(T));
         debug::assert(ptr != nullptr);
+        // debug::print("created %p\n", ptr);
+        // debug::printStackTrace(stderr);
+        *ptr = undefined;
         return ptr;
     }
 
@@ -42,6 +45,8 @@ struct Allocator {
     void destroy(T* ptr) {
         *ptr = undefined;
         ::free((void*)ptr);
+        // debug::print("destroyed %p\n", ptr);
+        // debug::printStackTrace(stderr);
     }
 
     template <typename T>

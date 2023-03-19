@@ -43,18 +43,13 @@ void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
     // Search for existing matching contact
     // Return if found duplicate to avoid duplicate constraints
     // Mark pre-existing duplicates as active
-    q3ContactEdge* edge = A->body->contact_edge_list;
-    while (edge) {
+    for (auto edge = A->body->contact_edge_list; edge; edge = edge->next) {
         if (edge->other == bodyB) {
             q3Box* shapeA = edge->constraint->A;
             q3Box* shapeB = edge->constraint->B;
-
-            // @TODO: Verify this against Box2D; not sure if this is all we need
-            // here
+            // @TODO: Verify this against Box2D; not sure if this is all we need here
             if ((A == shapeA) && (B == shapeB)) return;
         }
-
-        edge = edge->next;
     }
 
     // Create new contact
@@ -63,10 +58,10 @@ void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
     contact->B = B;
     contact->bodyA = A->body;
     contact->bodyB = B->body;
-    contact->manifold.SetPair(A, B);
-    contact->m_flags = 0;
     contact->friction = q3MixFriction(A, B);
     contact->restitution = q3MixRestitution(A, B);
+    contact->m_flags = 0;
+    contact->manifold.SetPair(A, B);
     contact->manifold.contactCount = 0;
     for (i32 i = 0; i < 8; ++i) contact->manifold.contacts[i].warmStarted = 0;
 
@@ -101,12 +96,8 @@ void q3ContactManager::RemoveContact(q3ContactConstraint* contact) {
 }
 
 void q3ContactManager::RemoveContactsFromBody(q3Body* body) {
-    q3ContactEdge* edge = body->contact_edge_list;
-
-    while (edge) {
-        q3ContactEdge* next = edge->next;
+    for (auto edge = body->contact_edge_list; edge; edge = edge->next) {
         RemoveContact(edge->constraint);
-        edge = next;
     }
 }
 
@@ -125,6 +116,7 @@ void q3ContactManager::TestCollisions(void) {
         auto opt_next = opt_node.unwrap()->next;
         q3ContactConstraint* constraint = &opt_node.unwrap()->data;
 
+        debug::print("constraint=%p\n", constraint);
         q3Box* A = constraint->A;
         q3Box* B = constraint->B;
         q3Body* bodyA = A->body;
@@ -138,6 +130,7 @@ void q3ContactManager::TestCollisions(void) {
         }
 
         if (!bodyA->CanCollide(bodyB)) {
+            auto next_node = opt_node.unwrap()->next;
             RemoveContact(constraint);
             opt_node = opt_next;
             continue;
@@ -145,6 +138,7 @@ void q3ContactManager::TestCollisions(void) {
 
         // Check if contact should persist
         if (!m_broadphase.TestOverlap(A->broadPhaseIndex, B->broadPhaseIndex)) {
+            auto next_node = opt_node.unwrap()->next;
             RemoveContact(constraint);
             opt_node = opt_next;
             continue;
