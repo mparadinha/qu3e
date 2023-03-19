@@ -91,62 +91,7 @@ struct q3BodyDef {
 };
 
 struct q3Body {
-    // Adds a box to this body. Boxes are all defined in local space
-    // of their owning body. Boxes cannot be defined relative to one
-    // another. The body will recalculate its mass values. No contacts
-    // will be created until the next q3Scene::Step( ) call.
-    const q3Box* AddBox(const q3BoxDef& def);
-
-    // Removes this box from the body and broadphase. Forces the body
-    // to recompute its mass if the body is dynamic. Frees the memory
-    // pointed to by the box pointer.
-    void RemoveBox(const q3Box* box);
-
-    // Removes all boxes from this body and the broadphase.
-    void RemoveAllBoxes();
-
-    void ApplyLinearForce(const q3Vec3& force);
-    void ApplyForceAtWorldPoint(const q3Vec3& force, const q3Vec3& point);
-    void ApplyLinearImpulse(const q3Vec3& impulse);
-    void ApplyLinearImpulseAtWorldPoint(const q3Vec3& impulse, const q3Vec3& point);
-    void ApplyTorque(const q3Vec3& torque);
-    void SetToAwake();
-    void SetToSleep();
-    bool IsAwake() const;
-    const q3Vec3 GetLocalPoint(const q3Vec3& p) const;
-    const q3Vec3 GetLocalVector(const q3Vec3& v) const;
-    const q3Vec3 GetWorldPoint(const q3Vec3& p) const;
-    const q3Vec3 GetWorldVector(const q3Vec3& v) const;
-    const q3Vec3 GetLinearVelocity() const;
-    const q3Vec3 GetVelocityAtWorldPoint(const q3Vec3& p) const;
-    void SetLinearVelocity(const q3Vec3& v);
-    const q3Vec3 GetAngularVelocity() const;
-    void SetAngularVelocity(const q3Vec3 v);
-    bool CanCollide(const q3Body* other) const;
-    const q3Transform GetTransform() const;
-    void SetLayers(i32 layers);
-    i32 GetLayers() const;
-    const q3Quaternion GetQuaternion() const;
-    void* GetUserData() const;
-
-    // Manipulating the transformation of a body manually will result in
-    // non-physical behavior. Contacts are updated upon the next call to
-    // q3Scene::Step( ). Parameters are in world space. All body types
-    // can be updated.
-    void SetTransform(const q3Vec3& position);
-    void SetTransform(const q3Vec3& position, const q3Vec3& axis, r32 angle);
-
-    r32 GetMass() const;
-    r32 GetInvMass() const;
-
-    void SetFlag(i32 flag) { this->m_flags |= flag; }
-
-    void UnsetFlag(i32 flag) { this->m_flags &= ~flag; }
-
-    bool HasFlag(i32 flag) { return this->m_flags & flag; }
-
-    // m_flags
-    enum {
+    enum Flag {
         eAwake = 0x001,
         eActive = 0x002,
         eAllowSleep = 0x004,
@@ -192,4 +137,47 @@ struct q3Body {
 
     void CalculateMassData();
     void SynchronizeProxies();
+
+    // Adds a box to this body. Boxes are all defined in local space
+    // of their owning body. Boxes cannot be defined relative to one
+    // another. The body will recalculate its mass values. No contacts
+    // will be created until the next q3Scene::Step( ) call.
+    const q3Box* AddBox(const q3BoxDef& def);
+
+    // Removes this box from the body and broadphase. Forces the body
+    // to recompute its mass if the body is dynamic. Frees the memory
+    // pointed to by the box pointer.
+    void RemoveBox(const q3Box* box);
+
+    // Removes all boxes from this body and the broadphase.
+    void RemoveAllBoxes();
+
+    void ApplyLinearForce(const q3Vec3& force);
+    void ApplyForceAtWorldPoint(const q3Vec3& force, const q3Vec3& point);
+    void ApplyLinearImpulse(const q3Vec3& impulse);
+    void ApplyLinearImpulseAtWorldPoint(const q3Vec3& impulse, const q3Vec3& point);
+    void ApplyTorque(const q3Vec3& torque);
+    void SetToAwake();
+    void SetToSleep();
+    const q3Vec3 GetLocalPoint(const q3Vec3& p) const;
+    const q3Vec3 GetLocalVector(const q3Vec3& v) const;
+    const q3Vec3 GetWorldPoint(const q3Vec3& p) const;
+    const q3Vec3 GetWorldVector(const q3Vec3& v) const;
+    const q3Vec3 GetVelocityAtWorldPoint(const q3Vec3& p) const;
+    void SetLinearVelocity(const q3Vec3& v);
+    void SetAngularVelocity(const q3Vec3 v);
+    bool CanCollide(const q3Body* other) const;
+
+    // Manipulating the transformation of a body manually will result in
+    // non-physical behavior. Contacts are updated upon the next call to
+    // q3Scene::Step( ). Parameters are in world space. All body types
+    // can be updated.
+    void SetTransform(const q3Vec3& position);
+    void SetTransform(const q3Vec3& position, const q3Vec3& axis, r32 angle);
+
+    void SetFlag(i32 flag) { this->m_flags |= flag; }
+
+    void UnsetFlag(i32 flag) { this->m_flags &= ~flag; }
+
+    bool HasFlag(i32 flag) { return this->m_flags & flag; }
 };

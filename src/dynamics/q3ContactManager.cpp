@@ -170,7 +170,7 @@ void q3ContactManager::TestCollisions(void) {
 
         constraint->m_flags &= ~q3ContactConstraint::eIsland;
 
-        if (!bodyA->IsAwake() && !bodyB->IsAwake()) {
+        if (!bodyA->HasFlag(q3Body::eAwake) && !bodyB->HasFlag(q3Body::eAwake)) {
             constraint = constraint->next;
             continue;
         }

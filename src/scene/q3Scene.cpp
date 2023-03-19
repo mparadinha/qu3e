@@ -220,7 +220,7 @@ void q3Scene::QueryAABB(q3QueryCallback* cb, const q3AABB& aabb) const {
             q3AABB aabb;
             q3Box* box = (q3Box*)broadPhase->m_tree.GetUserData(id);
 
-            box->ComputeAABB(box->body->GetTransform(), &aabb);
+            box->ComputeAABB(box->body->m_tx, &aabb);
 
             if (q3AABBtoAABB(m_aabb, aabb)) { return cb->ReportShape(box); }
 
@@ -244,7 +244,7 @@ void q3Scene::QueryPoint(q3QueryCallback* cb, const q3Vec3& point) const {
         bool TreeCallBack(i32 id) {
             q3Box* box = (q3Box*)broadPhase->m_tree.GetUserData(id);
 
-            if (box->TestPoint(box->body->GetTransform(), m_point)) { cb->ReportShape(box); }
+            if (box->TestPoint(box->body->m_tx, m_point)) { cb->ReportShape(box); }
 
             return true;
         }
@@ -271,7 +271,7 @@ void q3Scene::RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) const {
         bool TreeCallBack(i32 id) {
             q3Box* box = (q3Box*)broadPhase->m_tree.GetUserData(id);
 
-            if (box->Raycast(box->body->GetTransform(), m_rayCast)) { return cb->ReportShape(box); }
+            if (box->Raycast(box->body->m_tx, m_rayCast)) { return cb->ReportShape(box); }
 
             return true;
         }
@@ -296,7 +296,7 @@ void q3Scene::Render(q3Render* render) const {
     };
     // clang-format on
     for (q3Body* body = body_list; body; body = body->m_next) {
-        bool awake = body->IsAwake();
+        bool awake = body->HasFlag(q3Body::eAwake);
         for (q3Box* box = body->m_boxes; box; box = box->next) {
             q3Transform world = q3Mul(body->m_tx, box->local);
             const auto e = box->e;
@@ -327,7 +327,8 @@ void q3Scene::Render(q3Render* render) const {
             render->SetPenPosition(c->position.x, c->position.y, c->position.z);
             render->Point();
 
-            auto color = m->A->body->IsAwake() ? q3Vec3(1, 1, 1) : q3Vec3(0.2, 0.2, 0.2);
+            auto color =
+                m->A->body->HasFlag(q3Body::eAwake) ? q3Vec3(1, 1, 1) : q3Vec3(0.2, 0.2, 0.2);
             render->SetPenColor(color.x, color.y, color.z);
 
             render->SetPenPosition(c->position.x, c->position.y, c->position.z);

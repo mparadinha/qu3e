@@ -203,18 +203,6 @@ void q3Body::SetToSleep() {
     q3Identity(m_torque);
 }
 
-bool q3Body::IsAwake() const {
-    return m_flags & eAwake ? true : false;
-}
-
-r32 q3Body::GetMass() const {
-    return m_mass;
-}
-
-r32 q3Body::GetInvMass() const {
-    return m_invMass;
-}
-
 const q3Vec3 q3Body::GetLocalPoint(const q3Vec3& p) const {
     return q3MulT(m_tx, p);
 }
@@ -231,10 +219,6 @@ const q3Vec3 q3Body::GetWorldVector(const q3Vec3& v) const {
     return q3Mul(m_tx.rotation, v);
 }
 
-const q3Vec3 q3Body::GetLinearVelocity() const {
-    return m_linearVelocity;
-}
-
 const q3Vec3 q3Body::GetVelocityAtWorldPoint(const q3Vec3& p) const {
     q3Vec3 directionToPoint = p - m_worldCenter;
     q3Vec3 relativeAngularVel = q3Cross(m_angularVelocity, directionToPoint);
@@ -249,10 +233,6 @@ void q3Body::SetLinearVelocity(const q3Vec3& v) {
     if (q3Dot(v, v) > r32(0.0)) { SetToAwake(); }
 
     m_linearVelocity = v;
-}
-
-const q3Vec3 q3Body::GetAngularVelocity() const {
-    return m_angularVelocity;
 }
 
 void q3Body::SetAngularVelocity(const q3Vec3 v) {
@@ -275,10 +255,6 @@ bool q3Body::CanCollide(const q3Body* other) const {
     return true;
 }
 
-const q3Transform q3Body::GetTransform() const {
-    return m_tx;
-}
-
 void q3Body::SetTransform(const q3Vec3& position) {
     m_worldCenter = position;
 
@@ -291,22 +267,6 @@ void q3Body::SetTransform(const q3Vec3& position, const q3Vec3& axis, r32 angle)
     m_tx.rotation = m_q.ToMat3();
 
     SynchronizeProxies();
-}
-
-void q3Body::SetLayers(i32 layers) {
-    m_layers = layers;
-}
-
-i32 q3Body::GetLayers() const {
-    return m_layers;
-}
-
-const q3Quaternion q3Body::GetQuaternion() const {
-    return m_q;
-}
-
-void* q3Body::GetUserData() const {
-    return m_userData;
 }
 
 void q3Body::CalculateMassData() {
