@@ -175,9 +175,9 @@ struct q3Body {
     void SetTransform(const q3Vec3& position);
     void SetTransform(const q3Vec3& position, const q3Vec3& axis, r32 angle);
 
-    void SetFlag(i32 flag) { this->m_flags |= flag; }
+    void SetFlag(Flag flag) { this->m_flags |= flag; }
 
-    void UnsetFlag(i32 flag) { this->m_flags &= ~flag; }
+    void UnsetFlag(Flag flag) { this->m_flags &= ~flag; }
 
-    bool HasFlag(i32 flag) { return this->m_flags & flag; }
+    bool HasFlag(Flag flag) { return this->m_flags & flag; }
 };

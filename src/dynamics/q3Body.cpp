@@ -46,33 +46,26 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
     m_linearDamping = def.linearDamping;
     m_angularDamping = def.angularDamping;
 
-    if (def.bodyType == eDynamicBody)
-        m_flags |= q3Body::eDynamic;
-
-    else {
+    if (def.bodyType == eDynamicBody) {
+        SetFlag(q3Body::eDynamic);
+    } else {
         if (def.bodyType == eStaticBody) {
-            m_flags |= q3Body::eStatic;
+            SetFlag(q3Body::eStatic);
             q3Identity(m_linearVelocity);
             q3Identity(m_angularVelocity);
             q3Identity(m_force);
             q3Identity(m_torque);
+        } else if (def.bodyType == eKinematicBody) {
+            SetFlag(q3Body::eKinematic);
         }
-
-        else if (def.bodyType == eKinematicBody)
-            m_flags |= q3Body::eKinematic;
     }
 
-    if (def.allowSleep) m_flags |= eAllowSleep;
-
-    if (def.awake) m_flags |= eAwake;
-
-    if (def.active) m_flags |= eActive;
-
-    if (def.lockAxisX) m_flags |= eLockAxisX;
-
-    if (def.lockAxisY) m_flags |= eLockAxisY;
-
-    if (def.lockAxisZ) m_flags |= eLockAxisZ;
+    if (def.allowSleep) SetFlag(q3Body::eAllowSleep);
+    if (def.awake) SetFlag(q3Body::eAwake);
+    if (def.active) SetFlag(q3Body::eActive);
+    if (def.lockAxisX) SetFlag(q3Body::eLockAxisX);
+    if (def.lockAxisY) SetFlag(q3Body::eLockAxisY);
+    if (def.lockAxisZ) SetFlag(q3Body::eLockAxisZ);
 
     m_boxes = NULL;
     m_contactList = NULL;
@@ -159,27 +152,23 @@ void q3Body::RemoveAllBoxes() {
 
 void q3Body::ApplyLinearForce(const q3Vec3& force) {
     m_force += force * m_mass;
-
     SetToAwake();
 }
 
 void q3Body::ApplyForceAtWorldPoint(const q3Vec3& force, const q3Vec3& point) {
     m_force += force * m_mass;
     m_torque += q3Cross(point - m_worldCenter, force);
-
     SetToAwake();
 }
 
 void q3Body::ApplyLinearImpulse(const q3Vec3& impulse) {
     m_linearVelocity += impulse * m_invMass;
-
     SetToAwake();
 }
 
 void q3Body::ApplyLinearImpulseAtWorldPoint(const q3Vec3& impulse, const q3Vec3& point) {
     m_linearVelocity += impulse * m_invMass;
     m_angularVelocity += m_invInertiaWorld * q3Cross(point - m_worldCenter, impulse);
-
     SetToAwake();
 }
 
@@ -188,14 +177,12 @@ void q3Body::ApplyTorque(const q3Vec3& torque) {
 }
 
 void q3Body::SetToAwake() {
-    if (!(m_flags & eAwake)) {
-        m_flags |= eAwake;
-        m_sleepTime = r32(0.0);
-    }
+    if (!HasFlag(q3Body::eAwake)) { m_sleepTime = r32(0.0); }
+    SetFlag(q3Body::eAwake);
 }
 
 void q3Body::SetToSleep() {
-    m_flags &= ~eAwake;
+    UnsetFlag(q3Body::eAwake);
     m_sleepTime = r32(0.0);
     q3Identity(m_linearVelocity);
     q3Identity(m_angularVelocity);
@@ -222,25 +209,20 @@ const q3Vec3 q3Body::GetWorldVector(const q3Vec3& v) const {
 const q3Vec3 q3Body::GetVelocityAtWorldPoint(const q3Vec3& p) const {
     q3Vec3 directionToPoint = p - m_worldCenter;
     q3Vec3 relativeAngularVel = q3Cross(m_angularVelocity, directionToPoint);
-
     return m_linearVelocity + relativeAngularVel;
 }
 
 void q3Body::SetLinearVelocity(const q3Vec3& v) {
     // Velocity of static bodies cannot be adjusted
-    if (m_flags & eStatic) debug::assert(false);
-
+    debug::assert(!HasFlag(q3Body::eStatic));
     if (q3Dot(v, v) > r32(0.0)) { SetToAwake(); }
-
     m_linearVelocity = v;
 }
 
 void q3Body::SetAngularVelocity(const q3Vec3 v) {
     // Velocity of static bodies cannot be adjusted
-    if (m_flags & eStatic) debug::assert(false);
-
+    debug::assert(!HasFlag(q3Body::eStatic));
     if (q3Dot(v, v) > r32(0.0)) { SetToAwake(); }
-
     m_angularVelocity = v;
 }
 
@@ -257,7 +239,6 @@ bool q3Body::CanCollide(const q3Body* other) const {
 
 void q3Body::SetTransform(const q3Vec3& position) {
     m_worldCenter = position;
-
     SynchronizeProxies();
 }
 
@@ -265,7 +246,6 @@ void q3Body::SetTransform(const q3Vec3& position, const q3Vec3& axis, r32 angle)
     m_worldCenter = position;
     m_q.Set(axis, angle);
     m_tx.rotation = m_q.ToMat3();
-
     SynchronizeProxies();
 }
 
@@ -277,7 +257,7 @@ void q3Body::CalculateMassData() {
     m_mass = r32(0.0);
     r32 mass = r32(0.0);
 
-    if (m_flags & eStatic || m_flags & eKinematic) {
+    if (HasFlag(q3Body::eStatic) || HasFlag(q3Body::eKinematic)) {
         q3Identity(m_localCenter);
         m_worldCenter = m_tx.position;
         return;
@@ -329,10 +309,8 @@ void q3Body::SynchronizeProxies() {
     q3AABB aabb;
     q3Transform tx = m_tx;
 
-    q3Box* box = m_boxes;
-    while (box) {
+    for (q3Box* box = m_boxes; box; box = box->next) {
         box->ComputeAABB(tx, &aabb);
         broadphase->Update(box->broadPhaseIndex, aabb);
-        box = box->next;
     }
 }
