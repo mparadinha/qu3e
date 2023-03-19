@@ -59,8 +59,6 @@ struct q3ContactManager {
     void TestCollisions(void);
     static void SolveCollision(void* param);
 
-    void RenderContacts(q3Render* debugDrawer) const;
-
     q3ContactConstraint* m_contactList;
     i32 m_contactCount;
     q3PagedAllocator m_allocator;

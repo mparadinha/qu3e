@@ -335,24 +335,13 @@ void DisplayLoop(void) {
 
     UpdateImGui(1.0f / 60.0f);
 
-    ImGui::SetNewWindowDefaultPos(ImVec2(float(w - 300 - 30), 30));
-    ImGui::Begin("q3Scene Settings", NULL, ImVec2(300, 225));
+    ImGui::Begin("q3Scene Settings", NULL, ImVec2(320, 165));
     ImGui::Combo("Demo", &currentDemo, "Drop Boxes\0Ray Push\0Box Stack\0Test\0");
     ImGui::Checkbox("Pause", &paused);
     if (paused) ImGui::Checkbox("Single Step", &singleStep);
     ImGui::Checkbox("Sleeping", &enableSleep);
     ImGui::Checkbox("Friction", &enableFriction);
     ImGui::SliderInt("Iterations", &velocityIterations, 1, 50);
-    int flags = (1 << 0) | (1 << 1) | (1 << 2);
-    ImGui::InputText(
-        "Dump File Name", sceneFileName, ((int)(sizeof(sceneFileName) / sizeof(*sceneFileName))),
-        flags
-    );
-    if (ImGui::Button("Dump Scene")) {
-        FILE* fp = fopen(sceneFileName, "w");
-        scene.Dump(fp);
-        fclose(fp);
-    }
     ImGui::End();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -506,7 +495,7 @@ int InitApp(int argc, char** argv) {
     demos[2] = new BoxStack();
     demos[3] = new Test();
     demoCount = 4;
-    currentDemo = 0;
+    currentDemo = 1;
     demos[currentDemo]->Init();
     sprintf(sceneFileName, "q3dump.txt");
 

@@ -23,9 +23,8 @@ not be misrepresented as being the original software.
 distribution.
 */
 
-#include "../common/q3Memory.h"
-#include "../debug/q3Render.h"
 #include "q3DynamicAABBTree.h"
+#include "../common/q3Memory.h"
 
 inline void FattenAABB(q3AABB& aabb) {
     const r32 k_fattener = r32(0.5);
@@ -97,48 +96,6 @@ const q3AABB& q3DynamicAABBTree::GetFatAABB(i32 id) const {
     debug::assert(id >= 0 && id < m_capacity);
 
     return m_nodes[id].aabb;
-}
-
-void q3DynamicAABBTree::Render(q3Render* render) const {
-    if (m_root != Node::Null) {
-        render->SetPenColor(0.5f, 0.5f, 1.0f);
-        RenderNode(render, m_root);
-    }
-}
-
-void q3DynamicAABBTree::RenderNode(q3Render* render, i32 index) const {
-    debug::assert(index >= 0 && index < m_capacity);
-
-    Node* n = m_nodes + index;
-    const q3AABB& b = n->aabb;
-
-    render->SetPenPosition(b.min.x, b.max.y, b.min.z);
-
-    render->Line(b.min.x, b.max.y, b.max.z);
-    render->Line(b.max.x, b.max.y, b.max.z);
-    render->Line(b.max.x, b.max.y, b.min.z);
-    render->Line(b.min.x, b.max.y, b.min.z);
-
-    render->SetPenPosition(b.min.x, b.min.y, b.min.z);
-
-    render->Line(b.min.x, b.min.y, b.max.z);
-    render->Line(b.max.x, b.min.y, b.max.z);
-    render->Line(b.max.x, b.min.y, b.min.z);
-    render->Line(b.min.x, b.min.y, b.min.z);
-
-    render->SetPenPosition(b.min.x, b.min.y, b.min.z);
-    render->Line(b.min.x, b.max.y, b.min.z);
-    render->SetPenPosition(b.max.x, b.min.y, b.min.z);
-    render->Line(b.max.x, b.max.y, b.min.z);
-    render->SetPenPosition(b.max.x, b.min.y, b.max.z);
-    render->Line(b.max.x, b.max.y, b.max.z);
-    render->SetPenPosition(b.min.x, b.min.y, b.max.z);
-    render->Line(b.min.x, b.max.y, b.max.z);
-
-    if (!n->IsLeaf()) {
-        RenderNode(render, n->left);
-        RenderNode(render, n->right);
-    }
 }
 
 void q3DynamicAABBTree::Validate() const {

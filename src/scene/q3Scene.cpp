@@ -25,12 +25,13 @@ distribution.
 
 #include <stdlib.h>
 
+#include "q3Scene.h"
 #include "../collision/q3Box.h"
 #include "../dynamics/q3Body.h"
 #include "../dynamics/q3Contact.h"
 #include "../dynamics/q3ContactSolver.h"
 #include "../dynamics/q3Island.h"
-#include "q3Scene.h"
+#include "../debug/q3Render.h"
 
 q3Scene::q3Scene(r32 dt, const q3Vec3& gravity, usize iterations) :
     contact_manager(),
@@ -208,11 +209,6 @@ void q3Scene::SetAllowSleep(bool allowSleep) {
     }
 }
 
-void q3Scene::Render(q3Render* render) const {
-    for (q3Body* body = body_list; body; body = body->m_next) { body->Render(render); }
-    contact_manager.RenderContacts(render);
-}
-
 void q3Scene::Shutdown() {
     RemoveAllBodies();
     box_allocator.Clear();
@@ -292,20 +288,55 @@ void q3Scene::RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) const {
     contact_manager.m_broadphase.m_tree.Query(&wrapper, rayCast);
 }
 
-void q3Scene::Dump(FILE* file) const {
-    fprintf(file, "// Ensure 64/32-bit memory compatability with the dump contents\n");
-    fprintf(file, "debug::assert( sizeof( int* ) == %lu );\n", sizeof(int*));
-    fprintf(
-        file, "scene.SetGravity( q3Vec3( %.15lf, %.15lf, %.15lf ) );\n", gravity.x, gravity.y,
-        gravity.z
-    );
-    fprintf(file, "scene.SetAllowSleep( %s );\n", allow_sleep ? "true" : "false");
-    fprintf(file, "scene.SetEnableFriction( %s );\n", enable_friction ? "true" : "false");
+void q3Scene::Render(q3Render* render) const {
+    // clang-format off
+    const i32 box_indices[36] = {
+        1, 7, 5,     1, 3, 7,     1, 4, 3,     1, 2, 4,     3, 8, 7,     3, 4, 8,
+        5, 7, 8,     5, 8, 6,     1, 5, 6,     1, 6, 2,     2, 6, 8,     2, 8, 4,
+    };
+    // clang-format on
+    for (q3Body* body = body_list; body; body = body->m_next) {
+        bool awake = body->IsAwake();
+        for (q3Box* box = body->m_boxes; box; box = box->next) {
+            q3Transform world = q3Mul(body->m_tx, box->local);
+            const auto e = box->e;
+            const q3Vec3 vertices[8] = {q3Vec3(-e.x, -e.y, -e.z), q3Vec3(-e.x, -e.y, e.z),
+                                        q3Vec3(-e.x, e.y, -e.z),  q3Vec3(-e.x, e.y, e.z),
+                                        q3Vec3(e.x, -e.y, -e.z),  q3Vec3(e.x, -e.y, e.z),
+                                        q3Vec3(e.x, e.y, -e.z),   q3Vec3(e.x, e.y, e.z)};
+            for (i32 i = 0; i < 36; i += 3) {
+                q3Vec3 a = q3Mul(world, vertices[box_indices[i + 0] - 1]);
+                q3Vec3 b = q3Mul(world, vertices[box_indices[i + 1] - 1]);
+                q3Vec3 c = q3Mul(world, vertices[box_indices[i + 2] - 1]);
+                q3Vec3 n = q3Normalize(q3Cross(b - a, c - a));
+                render->SetTriNormal(n.x, n.y, n.z);
+                render->Triangle(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+            }
+        }
+    }
 
-    fprintf(file, "q3Body** bodies = (q3Body**)q3Alloc( sizeof( q3Body* ) * %lu );\n", body_count);
+    for (auto contact = contact_manager.m_contactList; contact; contact = contact->next) {
+        if (!(contact->m_flags & q3ContactConstraint::eColliding)) continue;
+        q3Manifold* m = &contact->manifold;
+        for (i32 j = 0; j < m->contactCount; ++j) {
+            const q3Contact* c = m->contacts + j;
+            f32 blue = (f32)(255 - c->warmStarted) / 255.0f;
+            f32 red = 1.0f - blue;
+            render->SetScale(10.0f, 10.0f, 10.0f);
+            render->SetPenColor(red, blue, blue);
+            render->SetPenPosition(c->position.x, c->position.y, c->position.z);
+            render->Point();
 
-    i32 i = 0;
-    for (q3Body* body = body_list; body; body = body->m_next, ++i) { body->Dump(file, i); }
+            auto color = m->A->body->IsAwake() ? q3Vec3(1, 1, 1) : q3Vec3(0.2, 0.2, 0.2);
+            render->SetPenColor(color.x, color.y, color.z);
 
-    fprintf(file, "q3Free( bodies );\n");
+            render->SetPenPosition(c->position.x, c->position.y, c->position.z);
+            render->Line(
+                c->position.x + m->normal.x * 0.5f, c->position.y + m->normal.y * 0.5f,
+                c->position.z + m->normal.z * 0.5f
+            );
+        }
+    }
+
+    render->SetScale(1.0f, 1.0f, 1.0f);
 }

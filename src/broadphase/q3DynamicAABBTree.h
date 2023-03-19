@@ -25,10 +25,9 @@ distribution.
 
 #pragma once
 
+#include "../common/q3Types.h"
 #include "../common/q3Geometry.h"
 #include "../math/q3Math.h"
-
-class q3Render;
 
 struct q3DynamicAABBTree {
     q3DynamicAABBTree();
@@ -41,7 +40,6 @@ struct q3DynamicAABBTree {
 
     void* GetUserData(i32 id) const;
     const q3AABB& GetFatAABB(i32 id) const;
-    void Render(q3Render* render) const;
 
     template <typename T>
     void Query(T* cb, const q3AABB& aabb) const;
@@ -89,7 +87,6 @@ struct q3DynamicAABBTree {
     void InsertLeaf(i32 index);
     void RemoveLeaf(i32 index);
     void ValidateStructure(i32 index) const;
-    void RenderNode(q3Render* render, i32 index) const;
 
     // Correct AABB hierarchy heights and AABBs starting at supplied
     // index traversing up the heirarchy

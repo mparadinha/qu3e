@@ -108,12 +108,4 @@ struct q3Scene {
     // Render the scene with an interpolated time between the last frame and
     // the current simulation step.
     void Render(q3Render* render) const;
-
-    // Dump all rigid bodies and shapes into a log file. The log can be
-    // used as C++ code to re-create an initial scene setup. Contacts
-    // are *not* logged, meaning any cached resolution solutions will
-    // not be saved to the log file. This means the log file will be most
-    // accurate when dumped upon scene initialization, instead of mid-
-    // simulation.
-    void Dump(FILE* file) const;
 };

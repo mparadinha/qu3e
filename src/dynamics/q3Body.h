@@ -136,13 +136,6 @@ struct q3Body {
     void SetTransform(const q3Vec3& position);
     void SetTransform(const q3Vec3& position, const q3Vec3& axis, r32 angle);
 
-    // Used for debug rendering lines, triangles and basic lighting
-    void Render(q3Render* render) const;
-
-    // Dump this rigid body and its shapes into a log file. The log can be
-    // used as C++ code to re-create an initial scene setup.
-    void Dump(FILE* file, i32 index) const;
-
     r32 GetMass() const;
     r32 GetInvMass() const;
 

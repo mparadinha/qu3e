@@ -25,7 +25,6 @@ distribution.
 
 #pragma once
 
-#include "../debug/q3Render.h"
 #include "../math/q3Mat3.h"
 #include "../math/q3Transform.h"
 #include "../math/q3Vec3.h"
@@ -57,7 +56,6 @@ struct q3Box {
     bool Raycast(const q3Transform& tx, q3RaycastData* raycast) const;
     void ComputeAABB(const q3Transform& tx, q3AABB* aabb) const;
     void ComputeMass(q3MassData* md) const;
-    void Render(const q3Transform& tx, bool awake, q3Render* render) const;
 };
 
 struct q3BoxDef {
