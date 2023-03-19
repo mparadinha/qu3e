@@ -83,7 +83,7 @@ struct q3VelocityState;
 #include "../zig_style/base.cpp"
 #include "../zig_style/builtin.cpp"
 #include "../zig_style/debug.cpp"
-#include "../zig_style/doubly_linked_list.cpp"
+#include "../zig_style/linked_list.cpp"
 #include "../zig_style/mem.cpp"
 
 #ifdef assert_was_already_defined
