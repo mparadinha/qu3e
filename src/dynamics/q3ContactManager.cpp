@@ -35,7 +35,6 @@ q3ContactManager::q3ContactManager() :
     m_broadphase(this) {
     m_contactList = NULL;
     m_contactCount = 0;
-    m_contactListener = NULL;
 }
 
 void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
@@ -215,17 +214,6 @@ void q3ContactManager::TestCollisions(void) {
                     break;
                 }
             }
-        }
-
-        if (m_contactListener) {
-            i32 now_colliding = constraint->m_flags & q3ContactConstraint::eColliding;
-            i32 was_colliding = constraint->m_flags & q3ContactConstraint::eWasColliding;
-
-            if (now_colliding && !was_colliding)
-                m_contactListener->BeginContact(constraint);
-
-            else if (!now_colliding && was_colliding)
-                m_contactListener->EndContact(constraint);
         }
 
         constraint = constraint->next;

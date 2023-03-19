@@ -29,13 +29,6 @@ distribution.
 #include "../common/q3Memory.h"
 #include "../broadphase/q3BroadPhase.h"
 
-struct q3ContactListener {
-    virtual ~q3ContactListener() {}
-
-    virtual void BeginContact(const q3ContactConstraint* contact) = 0;
-    virtual void EndContact(const q3ContactConstraint* contact) = 0;
-};
-
 struct q3ContactManager {
     q3ContactManager();
 
@@ -63,5 +56,4 @@ struct q3ContactManager {
     i32 m_contactCount;
     q3PagedAllocator m_allocator;
     q3BroadPhase m_broadphase;
-    q3ContactListener* m_contactListener;
 };
