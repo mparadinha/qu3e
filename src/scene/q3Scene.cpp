@@ -73,7 +73,7 @@ void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 st
         if (body->HasFlag(q3Body::eStatic)) continue;
 
         // Search all contacts connected to this body
-        q3ContactEdge* contacts = body->m_contactList;
+        q3ContactEdge* contacts = body->contact_edge_list;
         for (q3ContactEdge* edge = contacts; edge; edge = edge->next) {
             q3ContactConstraint* contact = edge->constraint;
 

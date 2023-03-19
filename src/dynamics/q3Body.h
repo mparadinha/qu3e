@@ -131,7 +131,8 @@ struct q3Body {
     r32 m_linearDamping;
     r32 m_angularDamping;
 
-    q3ContactEdge* m_contactList;
+    // contact manager owns the actual memory
+    q3ContactEdge* contact_edge_list;
 
     q3Body(const q3BodyDef& def, q3Scene* scene);
 

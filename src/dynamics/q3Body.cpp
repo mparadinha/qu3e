@@ -68,7 +68,7 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
     if (def.lockAxisZ) SetFlag(q3Body::eLockAxisZ);
 
     m_boxes = NULL;
-    m_contactList = NULL;
+    contact_edge_list = NULL;
 }
 
 const q3Box* q3Body::AddBox(const q3BoxDef& def) {
@@ -119,7 +119,7 @@ void q3Body::RemoveBox(const q3Box* box) {
     debug::assert(found);
 
     // Remove all contacts associated with this shape
-    q3ContactEdge* edge = m_contactList;
+    q3ContactEdge* edge = contact_edge_list;
     while (edge) {
         q3ContactConstraint* contact = edge->constraint;
         edge = edge->next;
