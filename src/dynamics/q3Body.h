@@ -30,6 +30,7 @@ distribution.
 #include "../common/q3Types.h"
 #include "../math/q3Math.h"
 #include "../math/q3Transform.h"
+#include "../dynamics/q3Contact.h"
 
 enum q3BodyType { eStaticBody, eDynamicBody, eKinematicBody };
 
@@ -138,6 +139,21 @@ struct q3Body {
 
     void CalculateMassData();
     void SynchronizeProxies();
+
+    // After setting the edge data, call this to link it into the body's list
+    void linkEdgeIntoList(q3ContactEdge* edge) {
+        edge->prev = NULL;
+        edge->next = this->contact_edge_list;
+        if (edge->next) edge->next->prev = edge;
+        this->contact_edge_list = edge;
+    }
+
+    // note this does not free any memory. only changes the links in the list
+    void unlinkEdgeFromList(q3ContactEdge* edge) {
+        if (edge->prev) edge->prev->next = edge->next;
+        if (edge->next) edge->next->prev = edge->prev;
+        if (this->contact_edge_list == edge) this->contact_edge_list = edge->next;
+    }
 
     // Boxes are all defined in local space of their owning body.
     // Boxes cannot be defined relative to one another.

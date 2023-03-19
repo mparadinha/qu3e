@@ -34,7 +34,7 @@ distribution.
 #include "../debug/q3Render.h"
 
 q3Scene::q3Scene(r32 dt, const q3Vec3& gravity, usize iterations) :
-    contact_manager(),
+    contact_manager(allocator),
     box_allocator(sizeof(q3Box), 256),
     body_count(0),
     body_list(NULL),
@@ -117,8 +117,8 @@ void q3Scene::Step() {
     defer(island.deinit());
     island.bodies.ensureTotalCapacity(body_count).unwrap();
     island.velocities.ensureTotalCapacity(body_count).unwrap();
-    island.contacts.ensureTotalCapacity(contact_manager.m_contactCount).unwrap();
-    island.contact_states.ensureTotalCapacity(contact_manager.m_contactCount).unwrap();
+    island.contacts.ensureTotalCapacity(contact_manager.contacts.len).unwrap();
+    island.contact_states.ensureTotalCapacity(contact_manager.contacts.len).unwrap();
 
     // Build each active island and then solve each built island
     i32 stackSize = body_count;
@@ -315,26 +315,26 @@ void q3Scene::Render(q3Render* render) const {
         }
     }
 
-    for (auto contact = contact_manager.m_contactList; contact; contact = contact->next) {
-        if (!(contact->m_flags & q3ContactConstraint::eColliding)) continue;
-        q3Manifold* m = &contact->manifold;
-        for (i32 j = 0; j < m->contactCount; ++j) {
-            const q3Contact* c = m->contacts + j;
-            f32 blue = (f32)(255 - c->warmStarted) / 255.0f;
+    for (q3ContactConstraint contact : contact_manager.contacts.iter()) {
+        if (!(contact.m_flags & q3ContactConstraint::eColliding)) continue;
+        q3Manifold m = contact.manifold;
+        for (i32 j = 0; j < m.contactCount; ++j) {
+            q3Contact c = m.contacts[j];
+            f32 blue = (f32)(255 - c.warmStarted) / 255.0f;
             f32 red = 1.0f - blue;
             render->SetScale(10.0f, 10.0f, 10.0f);
             render->SetPenColor(red, blue, blue);
-            render->SetPenPosition(c->position.x, c->position.y, c->position.z);
+            render->SetPenPosition(c.position.x, c.position.y, c.position.z);
             render->Point();
 
             auto color =
-                m->A->body->HasFlag(q3Body::eAwake) ? q3Vec3(1, 1, 1) : q3Vec3(0.2, 0.2, 0.2);
+                m.A->body->HasFlag(q3Body::eAwake) ? q3Vec3(1, 1, 1) : q3Vec3(0.2, 0.2, 0.2);
             render->SetPenColor(color.x, color.y, color.z);
 
-            render->SetPenPosition(c->position.x, c->position.y, c->position.z);
+            render->SetPenPosition(c.position.x, c.position.y, c.position.z);
             render->Line(
-                c->position.x + m->normal.x * 0.5f, c->position.y + m->normal.y * 0.5f,
-                c->position.z + m->normal.z * 0.5f
+                c.position.x + m.normal.x * 0.5f, c.position.y + m.normal.y * 0.5f,
+                c.position.z + m.normal.z * 0.5f
             );
         }
     }

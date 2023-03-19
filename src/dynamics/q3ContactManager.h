@@ -30,7 +30,7 @@ distribution.
 #include "../broadphase/q3BroadPhase.h"
 
 struct q3ContactManager {
-    q3ContactManager();
+    q3ContactManager(Allocator allocator);
 
     // Add a new contact constraint for a pair of objects
     // unless the contact constraint already exists
@@ -52,8 +52,7 @@ struct q3ContactManager {
     void TestCollisions(void);
     static void SolveCollision(void* param);
 
-    q3ContactConstraint* m_contactList;
-    i32 m_contactCount;
+    LinkedList<q3ContactConstraint> contacts;
     q3PagedAllocator m_allocator;
     q3BroadPhase m_broadphase;
 };

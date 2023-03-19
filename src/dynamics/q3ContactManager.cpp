@@ -30,12 +30,10 @@ distribution.
 #include "q3Contact.h"
 #include "q3ContactManager.h"
 
-q3ContactManager::q3ContactManager() :
+q3ContactManager::q3ContactManager(Allocator allocator) :
+    contacts(LinkedList<q3ContactConstraint>::init(allocator)),
     m_allocator(sizeof(q3ContactConstraint), 256),
-    m_broadphase(this) {
-    m_contactList = NULL;
-    m_contactCount = 0;
-}
+    m_broadphase(this) {}
 
 void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
     q3Body* bodyA = A->body;
@@ -60,7 +58,7 @@ void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
     }
 
     // Create new contact
-    q3ContactConstraint* contact = (q3ContactConstraint*)m_allocator.Allocate();
+    q3ContactConstraint* contact = &contacts.prepend({}).unwrap()->data;
     contact->A = A;
     contact->B = B;
     contact->bodyA = A->body;
@@ -70,36 +68,19 @@ void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
     contact->friction = q3MixFriction(A, B);
     contact->restitution = q3MixRestitution(A, B);
     contact->manifold.contactCount = 0;
-
     for (i32 i = 0; i < 8; ++i) contact->manifold.contacts[i].warmStarted = 0;
-
-    contact->prev = NULL;
-    contact->next = m_contactList;
-    if (m_contactList) m_contactList->prev = contact;
-    m_contactList = contact;
 
     // Connect A
     contact->edgeA.constraint = contact;
     contact->edgeA.other = bodyB;
-
-    contact->edgeA.prev = NULL;
-    contact->edgeA.next = bodyA->contact_edge_list;
-    if (bodyA->contact_edge_list) bodyA->contact_edge_list->prev = &contact->edgeA;
-    bodyA->contact_edge_list = &contact->edgeA;
-
+    bodyA->linkEdgeIntoList(&contact->edgeA);
     // Connect B
     contact->edgeB.constraint = contact;
     contact->edgeB.other = bodyA;
-
-    contact->edgeB.prev = NULL;
-    contact->edgeB.next = bodyB->contact_edge_list;
-    if (bodyB->contact_edge_list) bodyB->contact_edge_list->prev = &contact->edgeB;
-    bodyB->contact_edge_list = &contact->edgeB;
+    bodyB->linkEdgeIntoList(&contact->edgeB);
 
     bodyA->SetToAwake();
     bodyB->SetToAwake();
-
-    ++m_contactCount;
 }
 
 void q3ContactManager::FindNewContacts() {
@@ -110,33 +91,13 @@ void q3ContactManager::RemoveContact(q3ContactConstraint* contact) {
     q3Body* A = contact->bodyA;
     q3Body* B = contact->bodyB;
 
-    // Remove from A
-    if (contact->edgeA.prev) contact->edgeA.prev->next = contact->edgeA.next;
-
-    if (contact->edgeA.next) contact->edgeA.next->prev = contact->edgeA.prev;
-
-    if (&contact->edgeA == A->contact_edge_list) A->contact_edge_list = contact->edgeA.next;
-
-    // Remove from B
-    if (contact->edgeB.prev) contact->edgeB.prev->next = contact->edgeB.next;
-
-    if (contact->edgeB.next) contact->edgeB.next->prev = contact->edgeB.prev;
-
-    if (&contact->edgeB == B->contact_edge_list) B->contact_edge_list = contact->edgeB.next;
+    A->unlinkEdgeFromList(&contact->edgeA);
+    B->unlinkEdgeFromList(&contact->edgeB);
 
     A->SetToAwake();
     B->SetToAwake();
 
-    // Remove contact from the manager
-    if (contact->prev) contact->prev->next = contact->next;
-
-    if (contact->next) contact->next->prev = contact->prev;
-
-    if (contact == m_contactList) m_contactList = contact->next;
-
-    --m_contactCount;
-
-    m_allocator.Free(contact);
+    contacts.remove(contact);
 }
 
 void q3ContactManager::RemoveContactsFromBody(q3Body* body) {
@@ -159,9 +120,12 @@ void q3ContactManager::RemoveFromBroadphase(q3Body* body) {
 }
 
 void q3ContactManager::TestCollisions(void) {
-    q3ContactConstraint* constraint = m_contactList;
+    auto opt_node = contacts.head;
+    while (opt_node.is_not_null()) {
+        auto opt_next = opt_node.unwrap()->next;
+        q3ContactConstraint* constraint = &opt_node.unwrap()->data;
+        q3ContactConstraint* next = constraint->next;
 
-    while (constraint) {
         q3Box* A = constraint->A;
         q3Box* B = constraint->B;
         q3Body* bodyA = A->body;
@@ -170,22 +134,20 @@ void q3ContactManager::TestCollisions(void) {
         constraint->m_flags &= ~q3ContactConstraint::eIsland;
 
         if (!bodyA->HasFlag(q3Body::eAwake) && !bodyB->HasFlag(q3Body::eAwake)) {
-            constraint = constraint->next;
+            opt_node = opt_next;
             continue;
         }
 
         if (!bodyA->CanCollide(bodyB)) {
-            q3ContactConstraint* next = constraint->next;
             RemoveContact(constraint);
-            constraint = next;
+            opt_node = opt_next;
             continue;
         }
 
         // Check if contact should persist
         if (!m_broadphase.TestOverlap(A->broadPhaseIndex, B->broadPhaseIndex)) {
-            q3ContactConstraint* next = constraint->next;
             RemoveContact(constraint);
-            constraint = next;
+            opt_node = opt_next;
             continue;
         }
         q3Manifold* manifold = &constraint->manifold;
@@ -216,6 +178,6 @@ void q3ContactManager::TestCollisions(void) {
             }
         }
 
-        constraint = constraint->next;
+        opt_node = opt_next;
     }
 }

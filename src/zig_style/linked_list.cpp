@@ -38,6 +38,7 @@ struct LinkedList {
         node->next = this->head;
         node->data = item;
         if (opt_capture(node->next, next)) { next->prev = node; }
+        this->head = node;
         this->len += 1;
         return node;
     }
@@ -47,6 +48,7 @@ struct LinkedList {
     void remove(Node* node) {
         if (node->prev.is_not_null()) { node->prev.unwrap()->next = node->next; }
         if (node->next.is_not_null()) { node->next.unwrap()->prev = node->prev; }
+        if (this->head.is_not_null() and this->head.unwrap() == node) { this->head = node->next; }
         this->allocator.destroy(node);
         this->len -= 1;
     }
@@ -59,6 +61,19 @@ struct LinkedList {
         auto node_ptr = data_ptr - data_offset;
         Node* node = reinterpret_cast<Node*>(node_ptr);
         this->remove(node);
+    }
+
+    T* ptrAtIndex(usize index) {
+        debug::assert(index < this->len);
+        usize search_idx = 0;
+        Opt<Node*> opt_node = this->head;
+        while (opt_node.is_not_null()) {
+            Node* node = opt_node.unwrap();
+            if (search_idx == index) return &node->data;
+            opt_node = node->next;
+            search_idx += 1;
+        }
+        unreachable();
     }
 
     struct Iterator {

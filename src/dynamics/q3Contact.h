@@ -95,6 +95,7 @@ struct q3ContactConstraint {
 
     q3ContactEdge edgeA;
     q3ContactEdge edgeB;
+
     q3ContactConstraint* next;
     q3ContactConstraint* prev;
 
