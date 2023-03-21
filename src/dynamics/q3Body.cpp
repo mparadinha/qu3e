@@ -119,8 +119,12 @@ void q3Body::RemoveBox(q3Box* box) {
     debug::assert(found);
 
     // Remove all contacts associated with this shape
-    for (auto edge = contact_edge_list; edge; edge = edge->next) {
-        auto contact = edge->constraint;
+    // note: the `RemoveContact` frees a q3ContactConstraint which hold the
+    // edge pointed to in that iteration, so we can't use a normal for loop
+    q3ContactEdge* edge = contact_edge_list;
+    while (edge) {
+        q3ContactConstraint* contact = edge->constraint;
+        edge = edge->next;
         if (box == contact->A || box == contact->B) {
             m_scene->contact_manager.RemoveContact(contact);
         }

@@ -96,8 +96,13 @@ void q3ContactManager::RemoveContact(q3ContactConstraint* contact) {
 }
 
 void q3ContactManager::RemoveContactsFromBody(q3Body* body) {
-    for (auto edge = body->contact_edge_list; edge; edge = edge->next) {
+    // note: the `RemoveContact` frees a q3ContactConstraint which holds the
+    // edge pointed to in that iteration, so we can't use a normal for loop
+    q3ContactEdge* edge = body->contact_edge_list;
+    while (edge) {
+        q3ContactEdge* next = edge->next;
         RemoveContact(edge->constraint);
+        edge = next;
     }
 }
 
@@ -116,7 +121,6 @@ void q3ContactManager::TestCollisions(void) {
         auto opt_next = opt_node.unwrap()->next;
         q3ContactConstraint* constraint = &opt_node.unwrap()->data;
 
-        debug::print("constraint=%p\n", constraint);
         q3Box* A = constraint->A;
         q3Box* B = constraint->B;
         q3Body* bodyA = A->body;
@@ -130,7 +134,6 @@ void q3ContactManager::TestCollisions(void) {
         }
 
         if (!bodyA->CanCollide(bodyB)) {
-            auto next_node = opt_node.unwrap()->next;
             RemoveContact(constraint);
             opt_node = opt_next;
             continue;
@@ -138,7 +141,6 @@ void q3ContactManager::TestCollisions(void) {
 
         // Check if contact should persist
         if (!m_broadphase.TestOverlap(A->broadPhaseIndex, B->broadPhaseIndex)) {
-            auto next_node = opt_node.unwrap()->next;
             RemoveContact(constraint);
             opt_node = opt_next;
             continue;

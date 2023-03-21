@@ -104,7 +104,7 @@ struct q3ContactConstraint {
 
     q3Manifold manifold;
 
-    enum Flag {
+    enum {
         eColliding = 0x00000001,    // Set when contact collides during a step
         eWasColliding = 0x00000002, // Set when two objects stop colliding
         eIsland = 0x00000004,       // For internal marking during island forming
