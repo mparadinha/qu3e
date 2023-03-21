@@ -61,7 +61,6 @@ struct q3Island;
 struct q3Manifold;
 struct q3MassData;
 struct q3Mat3;
-struct q3PagedAllocator;
 struct q3Quaternion;
 struct q3QueryCallback;
 struct q3RaycastData;

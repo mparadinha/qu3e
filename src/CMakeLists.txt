@@ -6,7 +6,6 @@ set(qu3e_broadphase_srcs
 set(qu3e_broadphase_hdrs
 	broadphase/q3BroadPhase.h
 	broadphase/q3DynamicAABBTree.h
-	broadphase/q3DynamicAABBTree.inl
 )
 
 set(qu3e_collision_srcs
@@ -16,19 +15,15 @@ set(qu3e_collision_srcs
 
 set(qu3e_collision_hdrs
 	collision/q3Box.h
-	collision/q3Box.inl
 	collision/q3Collide.h
 )
 
 set(qu3e_common_srcs
 	common/q3Geometry.cpp
-	common/q3Memory.cpp
 )
 
 set(qu3e_common_hdrs
 	common/q3Geometry.h
-	common/q3Geometry.inl
-	common/q3Memory.h
 	common/q3Settings.h
 	common/q3Types.h
 )
@@ -61,14 +56,10 @@ set(qu3e_math_srcs
 
 set(qu3e_math_hdrs
 	math/q3Mat3.h
-	math/q3Mat3.inl
 	math/q3Math.h
-	math/q3Math.inl
 	math/q3Quaternion.h
 	math/q3Transform.h
-	math/q3Transform.inl
 	math/q3Vec3.h
-	math/q3Vec3.inl
 )
 
 set(qu3e_scene_srcs

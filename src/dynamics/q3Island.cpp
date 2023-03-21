@@ -24,7 +24,6 @@ distribution.
 */
 
 #include "../broadphase/q3BroadPhase.h"
-#include "../common/q3Memory.h"
 #include "../common/q3Settings.h"
 #include "q3Body.h"
 #include "q3Contact.h"

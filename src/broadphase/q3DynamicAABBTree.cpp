@@ -24,7 +24,6 @@ distribution.
 */
 
 #include "q3DynamicAABBTree.h"
-#include "../common/q3Memory.h"
 
 inline void FattenAABB(q3AABB& aabb) {
     const r32 k_fattener = r32(0.5);
@@ -34,28 +33,29 @@ inline void FattenAABB(q3AABB& aabb) {
     aabb.max += v;
 }
 
-q3DynamicAABBTree::q3DynamicAABBTree() {
+q3DynamicAABBTree::q3DynamicAABBTree(Allocator allocator) {
     m_root = Node::Null;
 
+    this->allocator = allocator;
     m_capacity = 1024;
     m_count = 0;
-    m_nodes = (Node*)q3Alloc(sizeof(Node) * m_capacity);
+    nodes = allocator.alloc<Node>(m_capacity).unwrap();
 
     AddToFreeList(0);
 }
 
 q3DynamicAABBTree::~q3DynamicAABBTree() {
-    q3Free(m_nodes);
+    allocator.free(nodes);
 }
 
 i32 q3DynamicAABBTree::Insert(const q3AABB& aabb, void* userData) {
     i32 id = AllocateNode();
 
     // Fatten AABB and set height/userdata
-    m_nodes[id].aabb = aabb;
-    FattenAABB(m_nodes[id].aabb);
-    m_nodes[id].userData = userData;
-    m_nodes[id].height = 0;
+    nodes[id].aabb = aabb;
+    FattenAABB(nodes[id].aabb);
+    nodes[id].userData = userData;
+    nodes[id].height = 0;
 
     InsertLeaf(id);
 
@@ -64,7 +64,7 @@ i32 q3DynamicAABBTree::Insert(const q3AABB& aabb, void* userData) {
 
 void q3DynamicAABBTree::Remove(i32 id) {
     debug::assert(id >= 0 && id < m_capacity);
-    debug::assert(m_nodes[id].IsLeaf());
+    debug::assert(nodes[id].IsLeaf());
 
     RemoveLeaf(id);
     DeallocateNode(id);
@@ -72,14 +72,14 @@ void q3DynamicAABBTree::Remove(i32 id) {
 
 bool q3DynamicAABBTree::Update(i32 id, const q3AABB& aabb) {
     debug::assert(id >= 0 && id < m_capacity);
-    debug::assert(m_nodes[id].IsLeaf());
+    debug::assert(nodes[id].IsLeaf());
 
-    if (m_nodes[id].aabb.Contains(aabb)) return false;
+    if (nodes[id].aabb.Contains(aabb)) return false;
 
     RemoveLeaf(id);
 
-    m_nodes[id].aabb = aabb;
-    FattenAABB(m_nodes[id].aabb);
+    nodes[id].aabb = aabb;
+    FattenAABB(nodes[id].aabb);
 
     InsertLeaf(id);
 
@@ -89,13 +89,13 @@ bool q3DynamicAABBTree::Update(i32 id, const q3AABB& aabb) {
 void* q3DynamicAABBTree::GetUserData(i32 id) const {
     debug::assert(id >= 0 && id < m_capacity);
 
-    return m_nodes[id].userData;
+    return nodes[id].userData;
 }
 
 const q3AABB& q3DynamicAABBTree::GetFatAABB(i32 id) const {
     debug::assert(id >= 0 && id < m_capacity);
 
-    return m_nodes[id].aabb;
+    return nodes[id].aabb;
 }
 
 void q3DynamicAABBTree::Validate() const {
@@ -105,7 +105,7 @@ void q3DynamicAABBTree::Validate() const {
 
     while (index != Node::Null) {
         debug::assert(index >= 0 && index < m_capacity);
-        index = m_nodes[index].next;
+        index = nodes[index].next;
         ++freeNodes;
     }
 
@@ -113,7 +113,7 @@ void q3DynamicAABBTree::Validate() const {
 
     // Validate tree structure
     if (m_root != Node::Null) {
-        debug::assert(m_nodes[m_root].parent == Node::Null);
+        debug::assert(nodes[m_root].parent == Node::Null);
 
 #ifdef _DEBUG
         ValidateStructure(m_root);
@@ -122,7 +122,7 @@ void q3DynamicAABBTree::Validate() const {
 }
 
 void q3DynamicAABBTree::ValidateStructure(i32 index) const {
-    Node* n = m_nodes + index;
+    const Node* n = &nodes[index];
 
     i32 il = n->left;
     i32 ir = n->right;
@@ -135,8 +135,8 @@ void q3DynamicAABBTree::ValidateStructure(i32 index) const {
 
     debug::assert(il >= 0 && il < m_capacity);
     debug::assert(ir >= 0 && ir < m_capacity);
-    Node* l = m_nodes + il;
-    Node* r = m_nodes + ir;
+    const Node* l = &nodes[il];
+    const Node* r = &nodes[ir];
 
     debug::assert(l->parent == index);
     debug::assert(r->parent == index);
@@ -148,27 +148,27 @@ void q3DynamicAABBTree::ValidateStructure(i32 index) const {
 i32 q3DynamicAABBTree::AllocateNode() {
     if (m_freeList == Node::Null) {
         m_capacity *= 2;
-        Node* newNodes = (Node*)q3Alloc(sizeof(Node) * m_capacity);
-        memcpy(newNodes, m_nodes, sizeof(Node) * m_count);
-        q3Free(m_nodes);
-        m_nodes = newNodes;
+        auto new_nodes = allocator.alloc<Node>(m_capacity).unwrap();
+        mem::copy(new_nodes, nodes);
+        allocator.free(nodes);
+        nodes = new_nodes;
 
         AddToFreeList(m_count);
     }
 
     i32 freeNode = m_freeList;
-    m_freeList = m_nodes[m_freeList].next;
-    m_nodes[freeNode].height = 0;
-    m_nodes[freeNode].left = Node::Null;
-    m_nodes[freeNode].right = Node::Null;
-    m_nodes[freeNode].parent = Node::Null;
-    m_nodes[freeNode].userData = NULL;
+    m_freeList = nodes[m_freeList].next;
+    nodes[freeNode].height = 0;
+    nodes[freeNode].left = Node::Null;
+    nodes[freeNode].right = Node::Null;
+    nodes[freeNode].parent = Node::Null;
+    nodes[freeNode].userData = NULL;
     ++m_count;
     return freeNode;
 }
 
 i32 q3DynamicAABBTree::Balance(i32 iA) {
-    Node* A = m_nodes + iA;
+    Node* A = &nodes[iA];
 
     if (A->IsLeaf() || A->height == 1) return iA;
 
@@ -181,8 +181,8 @@ i32 q3DynamicAABBTree::Balance(i32 iA) {
 
     i32 iB = A->left;
     i32 iC = A->right;
-    Node* B = m_nodes + iB;
-    Node* C = m_nodes + iC;
+    Node* B = &nodes[iB];
+    Node* C = &nodes[iC];
 
     i32 balance = C->height - B->height;
 
@@ -190,16 +190,16 @@ i32 q3DynamicAABBTree::Balance(i32 iA) {
     if (balance > 1) {
         i32 iF = C->left;
         i32 iG = C->right;
-        Node* F = m_nodes + iF;
-        Node* G = m_nodes + iG;
+        Node* F = &nodes[iF];
+        Node* G = &nodes[iG];
 
         // grandParent point to C
         if (A->parent != Node::Null) {
-            if (m_nodes[A->parent].left == iA)
-                m_nodes[A->parent].left = iC;
+            if (nodes[A->parent].left == iA)
+                nodes[A->parent].left = iC;
 
             else
-                m_nodes[A->parent].right = iC;
+                nodes[A->parent].right = iC;
         } else
             m_root = iC;
 
@@ -238,15 +238,15 @@ i32 q3DynamicAABBTree::Balance(i32 iA) {
     else if (balance < -1) {
         i32 iD = B->left;
         i32 iE = B->right;
-        Node* D = m_nodes + iD;
-        Node* E = m_nodes + iE;
+        Node* D = &nodes[iD];
+        Node* E = &nodes[iE];
 
         // grandParent point to B
         if (A->parent != Node::Null) {
-            if (m_nodes[A->parent].left == iA)
-                m_nodes[A->parent].left = iB;
+            if (nodes[A->parent].left == iA)
+                nodes[A->parent].left = iB;
             else
-                m_nodes[A->parent].right = iB;
+                nodes[A->parent].right = iB;
         }
 
         else
@@ -289,47 +289,46 @@ i32 q3DynamicAABBTree::Balance(i32 iA) {
 void q3DynamicAABBTree::InsertLeaf(i32 id) {
     if (m_root == Node::Null) {
         m_root = id;
-        m_nodes[m_root].parent = Node::Null;
+        nodes[m_root].parent = Node::Null;
         return;
     }
 
     // Search for sibling
     i32 searchIndex = m_root;
-    q3AABB leafAABB = m_nodes[id].aabb;
-    while (!m_nodes[searchIndex].IsLeaf()) {
+    q3AABB leafAABB = nodes[id].aabb;
+    while (!nodes[searchIndex].IsLeaf()) {
         // Cost for insertion at index (branch node), involves creation
         // of new branch to contain this index and the new leaf
-        q3AABB combined = q3Combine(leafAABB, m_nodes[searchIndex].aabb);
+        q3AABB combined = q3Combine(leafAABB, nodes[searchIndex].aabb);
         r32 combinedArea = combined.SurfaceArea();
         r32 branchCost = r32(2.0) * combinedArea;
 
         // Inherited cost (surface area growth from heirarchy update after
         // descent)
-        r32 inheritedCost = r32(2.0) * (combinedArea - m_nodes[searchIndex].aabb.SurfaceArea());
+        r32 inheritedCost = r32(2.0) * (combinedArea - nodes[searchIndex].aabb.SurfaceArea());
 
-        i32 left = m_nodes[searchIndex].left;
-        i32 right = m_nodes[searchIndex].right;
+        i32 left = nodes[searchIndex].left;
+        i32 right = nodes[searchIndex].right;
 
         // Calculate costs for left/right descents. If traversal is to a leaf,
         // then the cost of the combind AABB represents a new branch node.
         // Otherwise the cost is only the inflation of the pre-existing branch.
         r32 leftDescentCost;
-        if (m_nodes[left].IsLeaf())
-            leftDescentCost = q3Combine(leafAABB, m_nodes[left].aabb).SurfaceArea() + inheritedCost;
+        if (nodes[left].IsLeaf())
+            leftDescentCost = q3Combine(leafAABB, nodes[left].aabb).SurfaceArea() + inheritedCost;
         else {
-            r32 inflated = q3Combine(leafAABB, m_nodes[left].aabb).SurfaceArea();
-            r32 branchArea = m_nodes[left].aabb.SurfaceArea();
+            r32 inflated = q3Combine(leafAABB, nodes[left].aabb).SurfaceArea();
+            r32 branchArea = nodes[left].aabb.SurfaceArea();
             leftDescentCost = inflated - branchArea + inheritedCost;
         }
 
         // Cost for right descent
         r32 rightDescentCost;
-        if (m_nodes[right].IsLeaf())
-            rightDescentCost =
-                q3Combine(leafAABB, m_nodes[right].aabb).SurfaceArea() + inheritedCost;
+        if (nodes[right].IsLeaf())
+            rightDescentCost = q3Combine(leafAABB, nodes[right].aabb).SurfaceArea() + inheritedCost;
         else {
-            r32 inflated = q3Combine(leafAABB, m_nodes[right].aabb).SurfaceArea();
-            r32 branchArea = m_nodes[right].aabb.SurfaceArea();
+            r32 inflated = q3Combine(leafAABB, nodes[right].aabb).SurfaceArea();
+            r32 branchArea = nodes[right].aabb.SurfaceArea();
             rightDescentCost = inflated - branchArea + inheritedCost;
         }
 
@@ -346,36 +345,36 @@ void q3DynamicAABBTree::InsertLeaf(i32 id) {
     i32 sibling = searchIndex;
 
     // Create new parent
-    i32 oldParent = m_nodes[sibling].parent;
+    i32 oldParent = nodes[sibling].parent;
     i32 newParent = AllocateNode();
-    m_nodes[newParent].parent = oldParent;
-    m_nodes[newParent].userData = NULL;
-    m_nodes[newParent].aabb = q3Combine(leafAABB, m_nodes[sibling].aabb);
-    m_nodes[newParent].height = m_nodes[sibling].height + 1;
+    nodes[newParent].parent = oldParent;
+    nodes[newParent].userData = NULL;
+    nodes[newParent].aabb = q3Combine(leafAABB, nodes[sibling].aabb);
+    nodes[newParent].height = nodes[sibling].height + 1;
 
     // Sibling was root
     if (oldParent == Node::Null) {
-        m_nodes[newParent].left = sibling;
-        m_nodes[newParent].right = id;
-        m_nodes[sibling].parent = newParent;
-        m_nodes[id].parent = newParent;
+        nodes[newParent].left = sibling;
+        nodes[newParent].right = id;
+        nodes[sibling].parent = newParent;
+        nodes[id].parent = newParent;
         m_root = newParent;
     }
 
     else {
-        if (m_nodes[oldParent].left == sibling)
-            m_nodes[oldParent].left = newParent;
+        if (nodes[oldParent].left == sibling)
+            nodes[oldParent].left = newParent;
 
         else
-            m_nodes[oldParent].right = newParent;
+            nodes[oldParent].right = newParent;
 
-        m_nodes[newParent].left = sibling;
-        m_nodes[newParent].right = id;
-        m_nodes[sibling].parent = newParent;
-        m_nodes[id].parent = newParent;
+        nodes[newParent].left = sibling;
+        nodes[newParent].right = id;
+        nodes[sibling].parent = newParent;
+        nodes[id].parent = newParent;
     }
 
-    SyncHeirarchy(m_nodes[id].parent);
+    SyncHeirarchy(nodes[id].parent);
 }
 
 void q3DynamicAABBTree::RemoveLeaf(i32 id) {
@@ -385,33 +384,33 @@ void q3DynamicAABBTree::RemoveLeaf(i32 id) {
     }
 
     // Setup parent, grandParent and sibling
-    i32 parent = m_nodes[id].parent;
-    i32 grandParent = m_nodes[parent].parent;
+    i32 parent = nodes[id].parent;
+    i32 grandParent = nodes[parent].parent;
     i32 sibling;
 
-    if (m_nodes[parent].left == id)
-        sibling = m_nodes[parent].right;
+    if (nodes[parent].left == id)
+        sibling = nodes[parent].right;
 
     else
-        sibling = m_nodes[parent].left;
+        sibling = nodes[parent].left;
 
     // Remove parent and replace with sibling
     if (grandParent != Node::Null) {
         // Connect grandParent to sibling
-        if (m_nodes[grandParent].left == parent)
-            m_nodes[grandParent].left = sibling;
+        if (nodes[grandParent].left == parent)
+            nodes[grandParent].left = sibling;
 
         else
-            m_nodes[grandParent].right = sibling;
+            nodes[grandParent].right = sibling;
 
         // Connect sibling to grandParent
-        m_nodes[sibling].parent = grandParent;
+        nodes[sibling].parent = grandParent;
     }
 
     // Parent was root
     else {
         m_root = sibling;
-        m_nodes[sibling].parent = Node::Null;
+        nodes[sibling].parent = Node::Null;
     }
 
     DeallocateNode(parent);
@@ -422,12 +421,12 @@ void q3DynamicAABBTree::SyncHeirarchy(i32 index) {
     while (index != Node::Null) {
         index = Balance(index);
 
-        i32 left = m_nodes[index].left;
-        i32 right = m_nodes[index].right;
+        i32 left = nodes[index].left;
+        i32 right = nodes[index].right;
 
-        m_nodes[index].height = 1 + q3Max(m_nodes[left].height, m_nodes[right].height);
-        m_nodes[index].aabb = q3Combine(m_nodes[left].aabb, m_nodes[right].aabb);
+        nodes[index].height = 1 + q3Max(nodes[left].height, nodes[right].height);
+        nodes[index].aabb = q3Combine(nodes[left].aabb, nodes[right].aabb);
 
-        index = m_nodes[index].parent;
+        index = nodes[index].parent;
     }
 }

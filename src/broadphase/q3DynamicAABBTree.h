@@ -30,7 +30,7 @@ distribution.
 #include "../math/q3Math.h"
 
 struct q3DynamicAABBTree {
-    q3DynamicAABBTree();
+    q3DynamicAABBTree(Allocator allocator);
     ~q3DynamicAABBTree();
 
     // Provide tight-AABB
@@ -96,7 +96,8 @@ struct q3DynamicAABBTree {
     void AddToFreeList(i32 index);
 
     i32 m_root;
-    Node* m_nodes;
+    Allocator allocator;
+    Slice<Node> nodes;
     i32 m_count;    // Number of active nodes
     i32 m_capacity; // Max capacity of nodes
     i32 m_freeList;
@@ -104,20 +105,20 @@ struct q3DynamicAABBTree {
 
 inline void q3DynamicAABBTree::AddToFreeList(i32 index) {
     for (i32 i = index; i < m_capacity - 1; ++i) {
-        m_nodes[i].next = i + 1;
-        m_nodes[i].height = Node::Null;
+        nodes[i].next = i + 1;
+        nodes[i].height = Node::Null;
     }
 
-    m_nodes[m_capacity - 1].next = Node::Null;
-    m_nodes[m_capacity - 1].height = Node::Null;
+    nodes[m_capacity - 1].next = Node::Null;
+    nodes[m_capacity - 1].height = Node::Null;
     m_freeList = index;
 }
 
 inline void q3DynamicAABBTree::DeallocateNode(i32 index) {
     debug::assert(index >= 0 && index < m_capacity);
 
-    m_nodes[index].next = m_freeList;
-    m_nodes[index].height = Node::Null;
+    nodes[index].next = m_freeList;
+    nodes[index].height = Node::Null;
     m_freeList = index;
 
     --m_count;
@@ -136,7 +137,7 @@ inline void q3DynamicAABBTree::Query(T* cb, const q3AABB& aabb) const {
 
         i32 id = stack[--sp];
 
-        const Node* n = m_nodes + id;
+        const Node* n = &nodes[id];
         if (q3AABBtoAABB(aabb, n->aabb)) {
             if (n->IsLeaf()) {
                 if (!cb->TreeCallBack(id)) return;
@@ -167,7 +168,7 @@ void q3DynamicAABBTree::Query(T* cb, q3RaycastData& rayCast) const {
 
         if (id == Node::Null) continue;
 
-        const Node* n = m_nodes + id;
+        const Node* n = &nodes[id];
 
         q3Vec3 e = n->aabb.max - n->aabb.min;
         q3Vec3 d = p1 - p0;

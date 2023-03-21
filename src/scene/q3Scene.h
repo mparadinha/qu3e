@@ -30,7 +30,6 @@ distribution.
 #include "../common/q3Types.h"
 #include "../math/q3Math.h"
 #include "../dynamics/q3ContactManager.h"
-#include "../common/q3Memory.h"
 
 struct q3QueryCallback {
     virtual ~q3QueryCallback() {}

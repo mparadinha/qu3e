@@ -28,21 +28,23 @@ distribution.
 #include "../common/q3Geometry.h"
 #include "../dynamics/q3ContactManager.h"
 
-q3BroadPhase::q3BroadPhase(q3ContactManager* manager) {
+q3BroadPhase::q3BroadPhase(Allocator allocator, q3ContactManager* manager) :
+    m_tree(q3DynamicAABBTree(allocator)) {
+
     m_manager = manager;
 
     m_pairCount = 0;
     m_pairCapacity = 64;
-    m_pairBuffer = (q3ContactPair*)q3Alloc(m_pairCapacity * sizeof(q3ContactPair));
+    m_pairBuffer = (q3ContactPair*)malloc(m_pairCapacity * sizeof(q3ContactPair));
 
     m_moveCount = 0;
     m_moveCapacity = 64;
-    m_moveBuffer = (i32*)q3Alloc(m_moveCapacity * sizeof(i32));
+    m_moveBuffer = (i32*)malloc(m_moveCapacity * sizeof(i32));
 }
 
 q3BroadPhase::~q3BroadPhase() {
-    q3Free(m_moveBuffer);
-    q3Free(m_pairBuffer);
+    free(m_moveBuffer);
+    free(m_pairBuffer);
 }
 
 void q3BroadPhase::InsertBox(q3Box* box, const q3AABB& aabb) {
@@ -123,9 +125,9 @@ void q3BroadPhase::BufferMove(i32 id) {
     if (m_moveCount == m_moveCapacity) {
         i32* oldBuffer = m_moveBuffer;
         m_moveCapacity *= 2;
-        m_moveBuffer = (i32*)q3Alloc(m_moveCapacity * sizeof(i32));
+        m_moveBuffer = (i32*)malloc(m_moveCapacity * sizeof(i32));
         memcpy(m_moveBuffer, oldBuffer, m_moveCount * sizeof(i32));
-        q3Free(oldBuffer);
+        free(oldBuffer);
     }
 
     m_moveBuffer[m_moveCount++] = id;

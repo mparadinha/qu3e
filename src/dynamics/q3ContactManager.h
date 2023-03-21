@@ -26,7 +26,6 @@ distribution.
 #pragma once
 
 #include "../common/q3Types.h"
-#include "../common/q3Memory.h"
 #include "../broadphase/q3BroadPhase.h"
 #include "../dynamics/q3Contact.h"
 
@@ -53,6 +52,5 @@ struct q3ContactManager {
     void TestCollisions(void);
 
     LinkedList<q3ContactConstraint> contacts;
-    q3PagedAllocator m_allocator;
     q3BroadPhase m_broadphase;
 };

@@ -26,7 +26,6 @@ distribution.
 #pragma once
 
 #include "../common/q3Types.h"
-#include "../common/q3Memory.h"
 #include "q3DynamicAABBTree.h"
 
 struct q3ContactPair {
@@ -35,7 +34,7 @@ struct q3ContactPair {
 };
 
 struct q3BroadPhase {
-    q3BroadPhase(q3ContactManager* manager);
+    q3BroadPhase(Allocator allocator, q3ContactManager* manager);
     ~q3BroadPhase();
 
     void InsertBox(q3Box* shape, const q3AABB& aabb);
@@ -71,11 +70,12 @@ inline bool q3BroadPhase::TreeCallBack(i32 index) {
     if (index == m_currentIndex) return true;
 
     if (m_pairCount == m_pairCapacity) {
-        q3ContactPair* oldBuffer = m_pairBuffer;
+        auto old_slice = Slice<q3ContactPair>(m_pairBuffer, m_pairCapacity);
         m_pairCapacity *= 2;
-        m_pairBuffer = (q3ContactPair*)q3Alloc(m_pairCapacity * sizeof(q3ContactPair));
-        memcpy(m_pairBuffer, oldBuffer, m_pairCount * sizeof(q3ContactPair));
-        q3Free(oldBuffer);
+        auto allocator = Allocator();
+        m_pairBuffer = allocator.alloc<q3ContactPair>(m_pairCapacity).unwrap().ptr;
+        memcpy(m_pairBuffer, old_slice.ptr, m_pairCount * sizeof(q3ContactPair));
+        allocator.free(old_slice);
     }
 
     i32 iA = q3Min(index, m_currentIndex);
