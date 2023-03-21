@@ -99,9 +99,26 @@ struct LinkedList {
 
     Iterator iter() const { return Iterator{.cur_node = this->head}; }
 
-    struct PtrIterator : Iterator {
+    struct PtrIterator {
+        Opt<Node*> cur_node;
+
+        PtrIterator begin() { return *this; }
+
+        PtrIterator end() { return PtrIterator{.cur_node = Null}; }
+
+        bool operator==(PtrIterator other) { return this->cur_node == other.cur_node; }
+
+        PtrIterator& operator++() {
+            if (opt_capture(this->cur_node, node)) {
+                this->cur_node = node->next;
+            } else {
+                this->cur_node = Null;
+            }
+            return *this;
+        }
+
         T* operator*() const { return &this->cur_node.unwrap()->data; }
     };
 
-    PtrIterator ptrIter() { return PtrIterator{.cur_node = this->head}; }
+    PtrIterator ptrIter() const { return PtrIterator{.cur_node = this->head}; }
 };

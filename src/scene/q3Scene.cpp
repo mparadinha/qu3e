@@ -34,10 +34,10 @@ distribution.
 #include "../debug/q3Render.h"
 
 q3Scene::q3Scene(r32 dt, const q3Vec3& gravity, usize iterations) :
+    allocator(),
     contact_manager(allocator),
     box_allocator(sizeof(q3Box), 256),
-    body_count(0),
-    body_list(NULL),
+    bodies(LinkedList<q3Body>::init(allocator)),
     gravity(gravity),
     dt(dt),
     iterations(iterations),
@@ -110,21 +110,21 @@ void q3Scene::Step() {
 
     contact_manager.TestCollisions();
 
-    for (q3Body* body = body_list; body; body = body->m_next) body->m_flags &= ~q3Body::eIsland;
+    for (q3Body* body : bodies.ptrIter()) body->m_flags &= ~q3Body::eIsland;
 
     q3Island island =
         q3Island::init(allocator, dt, gravity, iterations, allow_sleep, enable_friction);
     defer(island.deinit());
-    island.bodies.ensureTotalCapacity(body_count).unwrap();
-    island.velocities.ensureTotalCapacity(body_count).unwrap();
+    island.bodies.ensureTotalCapacity(bodies.len).unwrap();
+    island.velocities.ensureTotalCapacity(bodies.len).unwrap();
     island.contacts.ensureTotalCapacity(contact_manager.contacts.len).unwrap();
     island.contact_states.ensureTotalCapacity(contact_manager.contacts.len).unwrap();
 
     // Build each active island and then solve each built island
-    i32 stackSize = body_count;
+    i32 stackSize = bodies.len;
     auto stack_slice = allocator.alloc<q3Body*>(stackSize).value;
     defer(allocator.free(stack_slice));
-    for (q3Body* seed = body_list; seed; seed = seed->m_next) {
+    for (q3Body* seed : bodies.ptrIter()) {
         if (seed->HasFlag(q3Body::eIsland)) continue; // Seed can't be part of an island already
         if (!seed->HasFlag(q3Body::eAwake)) continue; // Seed must be awake
         // Seed cannot be a static body in order to keep islands as small as possible
@@ -144,7 +144,7 @@ void q3Scene::Step() {
     }
 
     // Update the broadphase AABBs
-    for (q3Body* body = body_list; body; body = body->m_next) {
+    for (q3Body* body : bodies.ptrIter()) {
         if (body->m_flags & q3Body::eStatic) continue;
         body->SynchronizeProxies();
     }
@@ -153,59 +153,39 @@ void q3Scene::Step() {
     contact_manager.FindNewContacts();
 
     // Clear all forces
-    for (q3Body* body = body_list; body; body = body->m_next) {
+    for (q3Body* body : bodies.ptrIter()) {
         q3Identity(body->m_force);
         q3Identity(body->m_torque);
     }
 }
 
 q3Body* q3Scene::CreateBody(const q3BodyDef& def) {
-    q3Body* body = this->allocator.create<q3Body>().value;
-    *body = q3Body(def, this);
-
-    // Add body to scene bodyList
-    body->m_prev = NULL;
-    body->m_next = body_list;
-
-    if (body_list) body_list->m_prev = body;
-
-    body_list = body;
-    ++body_count;
-
+    q3Body* body = &bodies.prepend(q3Body(def, this)).unwrap()->data;
     return body;
 }
 
 void q3Scene::RemoveBody(q3Body* body) {
-    debug::assert(body_count > 0);
-
+    debug::assert(bodies.len > 0);
     contact_manager.RemoveContactsFromBody(body);
-
     body->RemoveAllBoxes();
-
-    // Remove body from scene bodyList
-    if (body->m_next) body->m_next->m_prev = body->m_prev;
-    if (body->m_prev) body->m_prev->m_next = body->m_next;
-    if (body == body_list) body_list = body->m_next;
-    --body_count;
-
-    this->allocator.destroy(body);
+    bodies.remove(body);
 }
 
 void q3Scene::RemoveAllBodies() {
-    q3Body* body = body_list;
-    while (body) {
-        q3Body* next = body->m_next;
+    auto opt_node = bodies.head;
+    while (opt_node.is_not_null()) {
+        auto opt_next = opt_node.unwrap()->next;
+        q3Body* body = &opt_node.unwrap()->data;
         body->RemoveAllBoxes();
-        this->allocator.destroy(body);
-        body = next;
+        bodies.remove(body);
+        opt_node = opt_next;
     }
-    body_list = NULL;
 }
 
 void q3Scene::SetAllowSleep(bool allowSleep) {
     allow_sleep = allowSleep;
     if (!allowSleep) {
-        for (q3Body* body = body_list; body; body = body->m_next) body->SetToAwake();
+        for (q3Body* body : bodies.ptrIter()) body->SetToAwake();
     }
 }
 
@@ -295,7 +275,7 @@ void q3Scene::Render(q3Render* render) const {
         5, 7, 8,     5, 8, 6,     1, 5, 6,     1, 6, 2,     2, 6, 8,     2, 8, 4,
     };
     // clang-format on
-    for (q3Body* body = body_list; body; body = body->m_next) {
+    for (q3Body* body : bodies.ptrIter()) {
         bool awake = body->HasFlag(q3Body::eAwake);
         for (q3Box* box = body->m_boxes; box; box = box->next) {
             q3Transform world = q3Mul(body->m_tx, box->local);

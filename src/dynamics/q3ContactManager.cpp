@@ -124,7 +124,6 @@ void q3ContactManager::TestCollisions(void) {
     while (opt_node.is_not_null()) {
         auto opt_next = opt_node.unwrap()->next;
         q3ContactConstraint* constraint = &opt_node.unwrap()->data;
-        q3ContactConstraint* next = constraint->next;
 
         q3Box* A = constraint->A;
         q3Box* B = constraint->B;

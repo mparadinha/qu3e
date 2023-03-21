@@ -41,7 +41,6 @@ struct q3QueryCallback {
 struct q3Scene {
     Allocator allocator;
     q3Vec3 gravity;
-    usize body_count;
     bool new_box;
     bool allow_sleep;
     // Friction occurs when two rigid bodies have shapes that slide along one
@@ -52,16 +51,9 @@ struct q3Scene {
     // Scene.Step(). Decreasing the iterations makes the simulation less
     // realistic (convergent). A good iteration number range is 5 to 20.
     usize iterations;
-    // Sets the listener to report collision start/end. Provides the user
-    // with a pointer to an q3ContactConstraint. The q3ContactConstraint
-    // holds pointers to the two shapes involved in a collision, and the
-    // two bodies connected to each shape. The q3ContactListener will be
-    // called very often, so it is recommended for the funciton to be very
-    // efficient. Provide a NULL pointer to remove the previously set
-    // listener.
     q3ContactManager contact_manager;
     q3PagedAllocator box_allocator;
-    q3Body* body_list;
+    LinkedList<q3Body> bodies;
 
     q3Scene(
         r32 dt, const q3Vec3& gravity = q3Vec3(r32(0.0), r32(-9.8), r32(0.0)), usize iterations = 20
