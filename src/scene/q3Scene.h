@@ -52,7 +52,6 @@ struct q3Scene {
     // realistic (convergent). A good iteration number range is 5 to 20.
     usize iterations;
     q3ContactManager contact_manager;
-    q3PagedAllocator box_allocator;
     LinkedList<q3Body> bodies;
 
     q3Scene(

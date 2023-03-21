@@ -36,7 +36,6 @@ distribution.
 q3Scene::q3Scene(r32 dt, const q3Vec3& gravity, usize iterations) :
     allocator(),
     contact_manager(allocator),
-    box_allocator(sizeof(q3Box), 256),
     bodies(LinkedList<q3Body>::init(allocator)),
     gravity(gravity),
     dt(dt),
@@ -47,7 +46,6 @@ q3Scene::q3Scene(r32 dt, const q3Vec3& gravity, usize iterations) :
 
 q3Scene::~q3Scene() {
     RemoveAllBodies();
-    box_allocator.Clear();
 }
 
 void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 stackSize) {
