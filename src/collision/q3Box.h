@@ -48,10 +48,6 @@ struct q3Box {
     mutable void* userData;
     mutable bool sensor;
 
-    void SetUserdata(void* data) const;
-    void* GetUserdata() const;
-    void SetSensor(bool isSensor);
-
     bool TestPoint(const q3Transform& tx, const q3Vec3& p) const;
     bool Raycast(const q3Transform& tx, q3RaycastData* raycast) const;
     void ComputeAABB(const q3Transform& tx, q3AABB* aabb) const;
@@ -59,6 +55,14 @@ struct q3Box {
 };
 
 struct q3BoxDef {
+    q3Transform m_tx;
+    q3Vec3 m_e;
+
+    r32 m_friction;
+    r32 m_restitution;
+    r32 m_density;
+    bool m_sensor;
+
     q3BoxDef() {
         // Common default values
         m_friction = r32(0.4);
@@ -67,47 +71,8 @@ struct q3BoxDef {
         m_sensor = false;
     }
 
-    void Set(const q3Transform& tx, const q3Vec3& extents);
-
-    void SetFriction(r32 friction);
-    void SetRestitution(r32 restitution);
-    void SetDensity(r32 density);
-    void SetSensor(bool sensor);
-
-    q3Transform m_tx;
-    q3Vec3 m_e;
-
-    r32 m_friction;
-    r32 m_restitution;
-    r32 m_density;
-    bool m_sensor;
+    void Set(const q3Transform& tx, const q3Vec3& extents) {
+        m_tx = tx;
+        m_e = extents * r32(0.5);
+    }
 };
-
-inline void q3Box::SetUserdata(void* data) const {
-    userData = data;
-}
-
-inline void* q3Box::GetUserdata() const {
-    return userData;
-}
-
-inline void q3BoxDef::Set(const q3Transform& tx, const q3Vec3& extents) {
-    m_tx = tx;
-    m_e = extents * r32(0.5);
-}
-
-inline void q3BoxDef::SetRestitution(r32 restitution) {
-    m_restitution = restitution;
-}
-
-inline void q3BoxDef::SetFriction(r32 friction) {
-    m_friction = friction;
-}
-
-inline void q3BoxDef::SetDensity(r32 density) {
-    m_density = density;
-}
-
-inline void q3BoxDef::SetSensor(bool sensor) {
-    m_sensor = sensor;
-}

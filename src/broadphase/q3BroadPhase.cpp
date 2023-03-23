@@ -57,14 +57,6 @@ void q3BroadPhase::RemoveBox(const q3Box* box) {
     m_tree.Remove(box->broadPhaseIndex);
 }
 
-inline bool ContactPairSort(const q3ContactPair& lhs, const q3ContactPair& rhs) {
-    if (lhs.A < rhs.A) return true;
-
-    if (lhs.A == rhs.A) return lhs.B < rhs.B;
-
-    return false;
-}
-
 void q3BroadPhase::UpdatePairs() {
     m_pairCount = 0;
 
@@ -85,7 +77,14 @@ void q3BroadPhase::UpdatePairs() {
     m_moveCount = 0;
 
     // Sort pairs to expose duplicates
-    std::sort(m_pairBuffer, m_pairBuffer + m_pairCount, ContactPairSort);
+    std::sort(
+        m_pairBuffer, m_pairBuffer + m_pairCount,
+        [](const auto& lhs, const auto& rhs) -> bool {
+            if (lhs.A < rhs.A) return true;
+            if (lhs.A == rhs.A) return lhs.B < rhs.B;
+            return false;
+        }
+    );
 
     // Queue manifolds for solving
     {
@@ -109,8 +108,6 @@ void q3BroadPhase::UpdatePairs() {
             }
         }
     }
-
-    m_tree.Validate();
 }
 
 void q3BroadPhase::Update(i32 id, const q3AABB& aabb) {
@@ -131,4 +128,27 @@ void q3BroadPhase::BufferMove(i32 id) {
     }
 
     m_moveBuffer[m_moveCount++] = id;
+}
+
+inline bool q3BroadPhase::TreeCallBack(i32 index) {
+    // Cannot collide with self
+    if (index == m_currentIndex) return true;
+
+    if (m_pairCount == m_pairCapacity) {
+        auto old_slice = Slice<q3ContactPair>(m_pairBuffer, m_pairCapacity);
+        m_pairCapacity *= 2;
+        auto allocator = Allocator();
+        m_pairBuffer = allocator.alloc<q3ContactPair>(m_pairCapacity).unwrap().ptr;
+        memcpy(m_pairBuffer, old_slice.ptr, m_pairCount * sizeof(q3ContactPair));
+        allocator.free(old_slice);
+    }
+
+    i32 iA = q3Min(index, m_currentIndex);
+    i32 iB = q3Max(index, m_currentIndex);
+
+    m_pairBuffer[m_pairCount].A = iA;
+    m_pairBuffer[m_pairCount].B = iB;
+    ++m_pairCount;
+
+    return true;
 }

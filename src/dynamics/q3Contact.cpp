@@ -26,10 +26,9 @@ distribution.
 #include "q3Contact.h"
 
 void q3Manifold::SetPair(q3Box* a, q3Box* b) {
-    A = a;
-    B = b;
-
-    sensor = A->sensor || B->sensor;
+    this->A = a;
+    this->B = b;
+    this->sensor = A->sensor || B->sensor;
 }
 
 void q3ContactConstraint::SolveCollision(void) {
@@ -38,20 +37,17 @@ void q3ContactConstraint::SolveCollision(void) {
     q3BoxtoBox(&manifold, A, B);
 
     if (manifold.contactCount > 0) {
-        if (m_flags & eColliding)
+        if (m_flags & eColliding) {
             m_flags |= eWasColliding;
-
-        else
+        } else {
             m_flags |= eColliding;
-    }
-
-    else {
+        }
+    } else {
         if (m_flags & eColliding) {
             m_flags &= ~eColliding;
             m_flags |= eWasColliding;
-        }
-
-        else
+        } else {
             m_flags &= ~eWasColliding;
+        }
     }
 }

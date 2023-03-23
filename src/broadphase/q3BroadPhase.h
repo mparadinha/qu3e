@@ -34,20 +34,6 @@ struct q3ContactPair {
 };
 
 struct q3BroadPhase {
-    q3BroadPhase(Allocator allocator, q3ContactManager* manager);
-    ~q3BroadPhase();
-
-    void InsertBox(q3Box* shape, const q3AABB& aabb);
-    void RemoveBox(const q3Box* shape);
-
-    // Generates the contact list. All previous contacts are returned to the
-    // allocator before generation occurs.
-    void UpdatePairs(void);
-
-    void Update(i32 id, const q3AABB& aabb);
-
-    bool TestOverlap(i32 A, i32 B) const;
-
     q3ContactManager* m_manager;
 
     q3ContactPair* m_pairBuffer;
@@ -61,29 +47,17 @@ struct q3BroadPhase {
     q3DynamicAABBTree m_tree;
     i32 m_currentIndex;
 
+    q3BroadPhase(Allocator allocator, q3ContactManager* manager);
+    ~q3BroadPhase();
+
+    void InsertBox(q3Box* shape, const q3AABB& aabb);
+    void RemoveBox(const q3Box* shape);
+    // Generates the contact list. All previous contacts are returned to the
+    // allocator before generation occurs.
+    void UpdatePairs(void);
+    void Update(i32 id, const q3AABB& aabb);
+    bool TestOverlap(i32 A, i32 B) const;
+
     void BufferMove(i32 id);
     bool TreeCallBack(i32 index);
 };
-
-inline bool q3BroadPhase::TreeCallBack(i32 index) {
-    // Cannot collide with self
-    if (index == m_currentIndex) return true;
-
-    if (m_pairCount == m_pairCapacity) {
-        auto old_slice = Slice<q3ContactPair>(m_pairBuffer, m_pairCapacity);
-        m_pairCapacity *= 2;
-        auto allocator = Allocator();
-        m_pairBuffer = allocator.alloc<q3ContactPair>(m_pairCapacity).unwrap().ptr;
-        memcpy(m_pairBuffer, old_slice.ptr, m_pairCount * sizeof(q3ContactPair));
-        allocator.free(old_slice);
-    }
-
-    i32 iA = q3Min(index, m_currentIndex);
-    i32 iB = q3Max(index, m_currentIndex);
-
-    m_pairBuffer[m_pairCount].A = iA;
-    m_pairBuffer[m_pairCount].B = iB;
-    ++m_pairCount;
-
-    return true;
-}

@@ -28,7 +28,6 @@ distribution.
 inline void FattenAABB(q3AABB& aabb) {
     const r32 k_fattener = r32(0.5);
     q3Vec3 v(k_fattener, k_fattener, k_fattener);
-
     aabb.min -= v;
     aabb.max += v;
 }
@@ -63,7 +62,6 @@ i32 q3DynamicAABBTree::Insert(const q3AABB& aabb, void* userData) {
 }
 
 void q3DynamicAABBTree::Remove(i32 id) {
-    debug::assert(id >= 0 && id < m_capacity);
     debug::assert(nodes[id].IsLeaf());
 
     RemoveLeaf(id);
@@ -71,7 +69,6 @@ void q3DynamicAABBTree::Remove(i32 id) {
 }
 
 bool q3DynamicAABBTree::Update(i32 id, const q3AABB& aabb) {
-    debug::assert(id >= 0 && id < m_capacity);
     debug::assert(nodes[id].IsLeaf());
 
     if (nodes[id].aabb.Contains(aabb)) return false;
@@ -87,62 +84,11 @@ bool q3DynamicAABBTree::Update(i32 id, const q3AABB& aabb) {
 }
 
 void* q3DynamicAABBTree::GetUserData(i32 id) const {
-    debug::assert(id >= 0 && id < m_capacity);
-
     return nodes[id].userData;
 }
 
 const q3AABB& q3DynamicAABBTree::GetFatAABB(i32 id) const {
-    debug::assert(id >= 0 && id < m_capacity);
-
     return nodes[id].aabb;
-}
-
-void q3DynamicAABBTree::Validate() const {
-    // Verify free list
-    i32 freeNodes = 0;
-    i32 index = m_freeList;
-
-    while (index != Node::Null) {
-        debug::assert(index >= 0 && index < m_capacity);
-        index = nodes[index].next;
-        ++freeNodes;
-    }
-
-    debug::assert(m_count + freeNodes == m_capacity);
-
-    // Validate tree structure
-    if (m_root != Node::Null) {
-        debug::assert(nodes[m_root].parent == Node::Null);
-
-#ifdef _DEBUG
-        ValidateStructure(m_root);
-#endif
-    }
-}
-
-void q3DynamicAABBTree::ValidateStructure(i32 index) const {
-    const Node* n = &nodes[index];
-
-    i32 il = n->left;
-    i32 ir = n->right;
-
-    if (n->IsLeaf()) {
-        debug::assert(ir == Node::Null);
-        debug::assert(n->height == 0);
-        return;
-    }
-
-    debug::assert(il >= 0 && il < m_capacity);
-    debug::assert(ir >= 0 && ir < m_capacity);
-    const Node* l = &nodes[il];
-    const Node* r = &nodes[ir];
-
-    debug::assert(l->parent == index);
-    debug::assert(r->parent == index);
-
-    ValidateStructure(il);
-    ValidateStructure(ir);
 }
 
 i32 q3DynamicAABBTree::AllocateNode() {
@@ -195,13 +141,14 @@ i32 q3DynamicAABBTree::Balance(i32 iA) {
 
         // grandParent point to C
         if (A->parent != Node::Null) {
-            if (nodes[A->parent].left == iA)
+            if (nodes[A->parent].left == iA) {
                 nodes[A->parent].left = iC;
-
-            else
+            } else {
                 nodes[A->parent].right = iC;
-        } else
+            }
+        } else {
             m_root = iC;
+        }
 
         // Swap A and C
         C->left = iA;
@@ -218,9 +165,7 @@ i32 q3DynamicAABBTree::Balance(i32 iA) {
 
             A->height = 1 + q3Max(B->height, G->height);
             C->height = 1 + q3Max(A->height, F->height);
-        }
-
-        else {
+        } else {
             C->right = iG;
             A->right = iF;
             F->parent = iA;
@@ -232,10 +177,7 @@ i32 q3DynamicAABBTree::Balance(i32 iA) {
         }
 
         return iC;
-    }
-
-    // B is higher, promote B
-    else if (balance < -1) {
+    } else if (balance < -1) { // B is higher, promote B
         i32 iD = B->left;
         i32 iE = B->right;
         Node* D = &nodes[iD];
@@ -243,14 +185,14 @@ i32 q3DynamicAABBTree::Balance(i32 iA) {
 
         // grandParent point to B
         if (A->parent != Node::Null) {
-            if (nodes[A->parent].left == iA)
+            if (nodes[A->parent].left == iA) {
                 nodes[A->parent].left = iB;
-            else
+            } else {
                 nodes[A->parent].right = iB;
-        }
-
-        else
+            }
+        } else {
             m_root = iB;
+        }
 
         // Swap A and B
         B->right = iA;
@@ -267,9 +209,7 @@ i32 q3DynamicAABBTree::Balance(i32 iA) {
 
             A->height = 1 + q3Max(C->height, E->height);
             B->height = 1 + q3Max(A->height, D->height);
-        }
-
-        else {
+        } else {
             B->left = iE;
             A->left = iD;
             D->parent = iA;
@@ -429,4 +369,22 @@ void q3DynamicAABBTree::SyncHeirarchy(i32 index) {
 
         index = nodes[index].parent;
     }
+}
+
+inline void q3DynamicAABBTree::AddToFreeList(i32 index) {
+    for (i32 i = index; i < m_capacity - 1; ++i) {
+        nodes[i].next = i + 1;
+        nodes[i].height = Node::Null;
+    }
+
+    nodes[m_capacity - 1].next = Node::Null;
+    nodes[m_capacity - 1].height = Node::Null;
+    m_freeList = index;
+}
+
+inline void q3DynamicAABBTree::DeallocateNode(i32 index) {
+    nodes[index].next = m_freeList;
+    nodes[index].height = Node::Null;
+    m_freeList = index;
+    --m_count;
 }

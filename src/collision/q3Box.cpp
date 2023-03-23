@@ -33,7 +33,6 @@ bool q3Box::TestPoint(const q3Transform& tx, const q3Vec3& p) const {
     for (int i = 0; i < 3; ++i) {
         r32 d = p0[i];
         r32 ei = e[i];
-
         if (d > ei || d < -ei) { return false; }
     }
 
@@ -58,9 +57,7 @@ bool q3Box::Raycast(const q3Transform& tx, q3RaycastData* raycast) const {
         if (q3Abs(d[i]) < epsilon) {
             // Detect separating axes
             if (p[i] < -e[i] || p[i] > e[i]) { return false; }
-        }
-
-        else {
+        } else {
             r32 d0 = r32(1.0) / d[i];
             r32 s = q3Sign(d[i]);
             r32 ei = e[i] * s;

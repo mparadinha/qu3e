@@ -62,5 +62,10 @@ struct ArrayList {
         this->items.len = new_len;
     }
 
+    ErrOrVoid resize(usize new_len) {
+        this->ensureTotalCapacity(new_len);
+        this->items.len = new_len;
+    }
+
     Slice<T> allocatedSlice() { return Slice<T>(this->items.ptr, this->capacity); }
 };

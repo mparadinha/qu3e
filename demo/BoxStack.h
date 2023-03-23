@@ -33,7 +33,7 @@ struct BoxStack : public Demo {
         q3Body* body = scene.CreateBody(bodyDef);
 
         q3BoxDef boxDef;
-        boxDef.SetRestitution(0);
+        boxDef.m_restitution = 0;
         q3Transform tx;
         q3Identity(tx);
         boxDef.Set(tx, q3Vec3(50.0f, 1.0f, 50.0f));
