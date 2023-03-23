@@ -91,28 +91,6 @@ const q3AABB& q3DynamicAABBTree::GetFatAABB(i32 id) const {
     return nodes[id].aabb;
 }
 
-i32 q3DynamicAABBTree::AllocateNode() {
-    if (m_freeList == Node::Null) {
-        m_capacity *= 2;
-        auto new_nodes = allocator.alloc<Node>(m_capacity).unwrap();
-        mem::copy(new_nodes, nodes);
-        allocator.free(nodes);
-        nodes = new_nodes;
-
-        AddToFreeList(m_count);
-    }
-
-    i32 freeNode = m_freeList;
-    m_freeList = nodes[m_freeList].next;
-    nodes[freeNode].height = 0;
-    nodes[freeNode].left = Node::Null;
-    nodes[freeNode].right = Node::Null;
-    nodes[freeNode].parent = Node::Null;
-    nodes[freeNode].userData = NULL;
-    ++m_count;
-    return freeNode;
-}
-
 i32 q3DynamicAABBTree::Balance(i32 iA) {
     Node* A = &nodes[iA];
 
@@ -371,6 +349,26 @@ void q3DynamicAABBTree::SyncHeirarchy(i32 index) {
     }
 }
 
+i32 q3DynamicAABBTree::AllocateNode() {
+    if (free_node_index == Node::Null) {
+        m_capacity *= 2;
+        nodes = allocator.realloc(nodes, m_capacity).unwrap();
+        AddToFreeList(m_count);
+    }
+
+    i32 freeNode = free_node_index;
+    free_node_index = nodes[free_node_index].next;
+    nodes[freeNode] = {
+        .parent = Node::Null,
+        .left = Node::Null,
+        .right = Node::Null,
+        .height = 0,
+        .userData = NULL,
+    };
+    ++m_count;
+    return freeNode;
+}
+
 inline void q3DynamicAABBTree::AddToFreeList(i32 index) {
     for (i32 i = index; i < m_capacity - 1; ++i) {
         nodes[i].next = i + 1;
@@ -379,12 +377,12 @@ inline void q3DynamicAABBTree::AddToFreeList(i32 index) {
 
     nodes[m_capacity - 1].next = Node::Null;
     nodes[m_capacity - 1].height = Node::Null;
-    m_freeList = index;
+    free_node_index = index;
 }
 
 inline void q3DynamicAABBTree::DeallocateNode(i32 index) {
-    nodes[index].next = m_freeList;
+    nodes[index].next = free_node_index;
     nodes[index].height = Node::Null;
-    m_freeList = index;
+    free_node_index = index;
     --m_count;
 }

@@ -33,11 +33,8 @@ struct q3DynamicAABBTree {
     struct Node {
         static const i32 Null = -1;
 
-        union {
-            i32 parent;
-            i32 next; // free list
-        };
-
+        i32 parent;
+        i32 next; // free list
         i32 left;
         i32 right;
         q3AABB aabb; // Fat AABB for leafs, bounding AABB for branches
@@ -52,7 +49,7 @@ struct q3DynamicAABBTree {
     Slice<Node> nodes;
     i32 m_count;    // Number of active nodes
     i32 m_capacity; // Max capacity of nodes
-    i32 m_freeList;
+    i32 free_node_index;
 
     q3DynamicAABBTree(Allocator allocator);
     ~q3DynamicAABBTree();

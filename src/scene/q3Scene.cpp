@@ -121,7 +121,7 @@ void q3Scene::Step() {
 
     // Build each active island and then solve each built island
     i32 stackSize = bodies.len;
-    auto stack_slice = allocator.alloc<q3Body*>(stackSize).value;
+    auto stack_slice = allocator.alloc<q3Body*>(stackSize).unwrap();
     defer(allocator.free(stack_slice));
     for (q3Body* seed : bodies.ptrIter()) {
         if (seed->HasFlag(q3Body::eIsland)) continue; // Seed can't be part of an island already
