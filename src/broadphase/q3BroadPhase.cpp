@@ -41,6 +41,8 @@ q3BroadPhase::~q3BroadPhase() {
     moving_boxes.deinit();
 }
 
+// void q3Broadphase::Query(q3C) {}
+
 void q3BroadPhase::InsertBox(q3Box* box, const q3AABB& aabb) {
     i32 id = m_tree.Insert(aabb, box);
     box->broadPhaseIndex = id;

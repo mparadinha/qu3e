@@ -76,25 +76,10 @@ struct q3DynamicAABBTree {
 
     template <typename T>
     inline void Query(T* cb, const q3AABB& aabb) const {
-        const i32 k_stackCapacity = 256;
-        i32 stack[k_stackCapacity];
-        i32 sp = 1;
-
-        *stack = m_root;
-
-        while (sp) {
-            debug::assert(sp < k_stackCapacity);
-
-            i32 id = stack[--sp];
-
-            const Node* n = &nodes[id];
-            if (q3AABBtoAABB(aabb, n->aabb)) {
-                if (n->IsLeaf()) {
-                    if (!cb->TreeCallBack(id)) return;
-                } else {
-                    stack[sp++] = n->left;
-                    stack[sp++] = n->right;
-                }
+        for (auto [node, idx] : nodes.iter()) {
+            if (idx == free_node_index or !node.IsLeaf()) continue;
+            if (q3AABBtoAABB(aabb, node.aabb)) {
+                if (!cb->TreeCallBack(idx)) return;
             }
         }
     }
@@ -102,30 +87,21 @@ struct q3DynamicAABBTree {
     template <typename T>
     void Query(T* cb, q3RaycastData& rayCast) const {
         const r32 k_epsilon = r32(1.0e-6);
-        const i32 k_stackCapacity = 256;
-        i32 stack[k_stackCapacity];
-        i32 sp = 1;
-
-        *stack = m_root;
-
         q3Vec3 p0 = rayCast.start;
         q3Vec3 p1 = p0 + rayCast.dir * rayCast.t;
 
-        while (sp) {
-            debug::assert(sp < k_stackCapacity);
-            i32 id = stack[--sp];
-            if (id == Node::Null) continue;
-            const Node* n = &nodes[id];
+        for (auto [node, idx] : nodes.iter()) {
+            if (idx == free_node_index or !node.IsLeaf()) continue;
 
-            q3Vec3 e = n->aabb.max - n->aabb.min;
+            q3Vec3 e = node.aabb.max - node.aabb.min;
             q3Vec3 d = p1 - p0;
-            q3Vec3 m = p0 + p1 - n->aabb.min - n->aabb.max;
+            q3Vec3 m = p0 + p1 - node.aabb.min - node.aabb.max;
 
             r32 adx = q3Abs(d.x);
-            if (q3Abs(m.x) > e.x + adx) continue;
             r32 ady = q3Abs(d.y);
-            if (q3Abs(m.y) > e.y + ady) continue;
             r32 adz = q3Abs(d.z);
+            if (q3Abs(m.x) > e.x + adx) continue;
+            if (q3Abs(m.y) > e.y + ady) continue;
             if (q3Abs(m.z) > e.z + adz) continue;
 
             adx += k_epsilon;
@@ -136,12 +112,7 @@ struct q3DynamicAABBTree {
             if (q3Abs(m.z * d.x - m.x * d.z) > e.x * adz + e.z * adx) continue;
             if (q3Abs(m.x * d.y - m.y * d.x) > e.x * ady + e.y * adx) continue;
 
-            if (n->IsLeaf()) {
-                if (!cb->TreeCallBack(id)) return;
-            } else {
-                stack[sp++] = n->left;
-                stack[sp++] = n->right;
-            }
+            if (!cb->TreeCallBack(idx)) return;
         }
     }
 };

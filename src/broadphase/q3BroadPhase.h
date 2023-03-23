@@ -43,6 +43,8 @@ struct q3BroadPhase {
     q3BroadPhase(Allocator allocator, q3ContactManager* manager);
     ~q3BroadPhase();
 
+    // void Query();
+
     void InsertBox(q3Box* shape, const q3AABB& aabb);
     void RemoveBox(const q3Box* shape);
     // Generates the contact list. All previous contacts are returned to the

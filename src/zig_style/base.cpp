@@ -220,7 +220,7 @@ struct Slice {
 
     auto end() { return this->ptr + this->len; }
 
-    IdxIter<T> iter() { return IdxIter<T>(this->ptr, this->len); }
+    IdxIter<T> iter() const { return IdxIter<T>(this->ptr, this->len); }
 };
 
 template <typename T, T sentinel_val>
