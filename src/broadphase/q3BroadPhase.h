@@ -35,15 +35,8 @@ struct q3ContactPair {
 
 struct q3BroadPhase {
     q3ContactManager* m_manager;
-
-    q3ContactPair* m_pairBuffer;
-    i32 m_pairCount;
-    i32 m_pairCapacity;
-
-    i32* m_moveBuffer;
-    i32 m_moveCount;
-    i32 m_moveCapacity;
-
+    ArrayList<q3ContactPair> pairs;
+    ArrayList<i32> moving_boxes;
     q3DynamicAABBTree m_tree;
     i32 m_currentIndex;
 
@@ -57,7 +50,5 @@ struct q3BroadPhase {
     void UpdatePairs(void);
     void Update(i32 id, const q3AABB& aabb);
     bool TestOverlap(i32 A, i32 B) const;
-
-    void BufferMove(i32 id);
     bool TreeCallBack(i32 index);
 };

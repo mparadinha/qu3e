@@ -32,25 +32,19 @@ q3BroadPhase::q3BroadPhase(Allocator allocator, q3ContactManager* manager) :
     m_tree(q3DynamicAABBTree(allocator)) {
 
     m_manager = manager;
-
-    m_pairCount = 0;
-    m_pairCapacity = 64;
-    m_pairBuffer = (q3ContactPair*)malloc(m_pairCapacity * sizeof(q3ContactPair));
-
-    m_moveCount = 0;
-    m_moveCapacity = 64;
-    m_moveBuffer = (i32*)malloc(m_moveCapacity * sizeof(i32));
+    pairs = ArrayList<q3ContactPair>::initCapacity(allocator, 64).unwrap();
+    moving_boxes = ArrayList<i32>::initCapacity(allocator, 64).unwrap();
 }
 
 q3BroadPhase::~q3BroadPhase() {
-    free(m_moveBuffer);
-    free(m_pairBuffer);
+    pairs.deinit();
+    moving_boxes.deinit();
 }
 
 void q3BroadPhase::InsertBox(q3Box* box, const q3AABB& aabb) {
     i32 id = m_tree.Insert(aabb, box);
     box->broadPhaseIndex = id;
-    BufferMove(id);
+    moving_boxes.append(id).unwrap();
 }
 
 void q3BroadPhase::RemoveBox(const q3Box* box) {
@@ -58,27 +52,25 @@ void q3BroadPhase::RemoveBox(const q3Box* box) {
 }
 
 void q3BroadPhase::UpdatePairs() {
-    m_pairCount = 0;
+    pairs.shrinkRetainingCapacity(0);
 
-    // Query the tree with all moving boxs
-    for (i32 i = 0; i < m_moveCount; ++i) {
-        m_currentIndex = m_moveBuffer[i];
+    // Query the tree with all moving boxes
+    for (auto [val, idx] : moving_boxes.items.iter()) {
+        m_currentIndex = val;
         q3AABB aabb = m_tree.GetFatAABB(m_currentIndex);
-
-        // @TODO: Use a static and non-static tree and query one against the
-        // other.
-        //        This will potentially prevent (gotta think about this more)
-        //        time wasted with queries of static bodies against static
-        //        bodies, and kinematic to kinematic.
+        // @TODO: Use a static and non-static tree and query one against the other.
+        // This will potentially prevent (gotta think about this more)
+        // time wasted with queries of static bodies against static
+        // bodies, and kinematic to kinematic.
         m_tree.Query(this, aabb);
     }
 
     // Reset the move buffer
-    m_moveCount = 0;
+    moving_boxes.shrinkRetainingCapacity(0);
 
     // Sort pairs to expose duplicates
     std::sort(
-        m_pairBuffer, m_pairBuffer + m_pairCount,
+        pairs.items.ptr, pairs.items.ptr + pairs.items.len,
         [](const auto& lhs, const auto& rhs) -> bool {
             if (lhs.A < rhs.A) return true;
             if (lhs.A == rhs.A) return lhs.B < rhs.B;
@@ -87,68 +79,38 @@ void q3BroadPhase::UpdatePairs() {
     );
 
     // Queue manifolds for solving
-    {
-        i32 i = 0;
-        while (i < m_pairCount) {
-            // Add contact to manager
-            q3ContactPair* pair = m_pairBuffer + i;
-            q3Box* A = (q3Box*)m_tree.GetUserData(pair->A);
-            q3Box* B = (q3Box*)m_tree.GetUserData(pair->B);
-            m_manager->AddContact(A, B);
+    i32 i = 0;
+    while (i < pairs.items.len) {
+        // Add contact to manager
+        q3ContactPair* pair = &pairs.items[i];
+        q3Box* A = (q3Box*)m_tree.GetUserData(pair->A);
+        q3Box* B = (q3Box*)m_tree.GetUserData(pair->B);
+        m_manager->AddContact(A, B);
+        ++i;
 
+        // Skip duplicate pairs by iterating i until we find a unique pair
+        while (i < pairs.items.len) {
+            q3ContactPair* potentialDup = &pairs.items[i];
+            if (pair->A != potentialDup->A || pair->B != potentialDup->B) break;
             ++i;
-
-            // Skip duplicate pairs by iterating i until we find a unique pair
-            while (i < m_pairCount) {
-                q3ContactPair* potentialDup = m_pairBuffer + i;
-
-                if (pair->A != potentialDup->A || pair->B != potentialDup->B) break;
-
-                ++i;
-            }
         }
     }
 }
 
 void q3BroadPhase::Update(i32 id, const q3AABB& aabb) {
-    if (m_tree.Update(id, aabb)) BufferMove(id);
+    if (m_tree.Update(id, aabb)) moving_boxes.append(id).unwrap();
 }
 
 bool q3BroadPhase::TestOverlap(i32 A, i32 B) const {
     return q3AABBtoAABB(m_tree.GetFatAABB(A), m_tree.GetFatAABB(B));
 }
 
-void q3BroadPhase::BufferMove(i32 id) {
-    if (m_moveCount == m_moveCapacity) {
-        i32* oldBuffer = m_moveBuffer;
-        m_moveCapacity *= 2;
-        m_moveBuffer = (i32*)malloc(m_moveCapacity * sizeof(i32));
-        memcpy(m_moveBuffer, oldBuffer, m_moveCount * sizeof(i32));
-        free(oldBuffer);
-    }
-
-    m_moveBuffer[m_moveCount++] = id;
-}
-
 inline bool q3BroadPhase::TreeCallBack(i32 index) {
     // Cannot collide with self
     if (index == m_currentIndex) return true;
 
-    if (m_pairCount == m_pairCapacity) {
-        auto old_slice = Slice<q3ContactPair>(m_pairBuffer, m_pairCapacity);
-        m_pairCapacity *= 2;
-        auto allocator = Allocator();
-        m_pairBuffer = allocator.alloc<q3ContactPair>(m_pairCapacity).unwrap().ptr;
-        memcpy(m_pairBuffer, old_slice.ptr, m_pairCount * sizeof(q3ContactPair));
-        allocator.free(old_slice);
-    }
-
     i32 iA = q3Min(index, m_currentIndex);
     i32 iB = q3Max(index, m_currentIndex);
-
-    m_pairBuffer[m_pairCount].A = iA;
-    m_pairBuffer[m_pairCount].B = iB;
-    ++m_pairCount;
-
+    pairs.append({.A = iA, .B = iB}).unwrap();
     return true;
 }

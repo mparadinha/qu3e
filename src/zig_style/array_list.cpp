@@ -15,6 +15,13 @@ struct ArrayList {
         return ArrayList<T>{.items = Slice<T>(nullptr, 0), .capacity = 0, .allocator = allocator};
     }
 
+    static ErrOr<ArrayList<T>> initCapacity(Allocator allocator, usize size) {
+        auto list =
+            ArrayList<T>{.items = Slice<T>(nullptr, 0), .capacity = 0, .allocator = allocator};
+        try_expr(list.ensureTotalCapacity(size));
+        return list;
+    }
+
     void deinit() {
         this->allocator.free(this->allocatedSlice());
         *this = undefined;
