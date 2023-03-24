@@ -1,11 +1,9 @@
 set(qu3e_broadphase_srcs
 	broadphase/q3BroadPhase.cpp
-	broadphase/q3DynamicAABBTree.cpp
 )
 
 set(qu3e_broadphase_hdrs
 	broadphase/q3BroadPhase.h
-	broadphase/q3DynamicAABBTree.h
 )
 
 set(qu3e_collision_srcs

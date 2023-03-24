@@ -28,33 +28,30 @@ distribution.
 #include "../common/q3Geometry.h"
 #include "../dynamics/q3ContactManager.h"
 
-q3BroadPhase::q3BroadPhase(Allocator allocator, q3ContactManager* manager) :
-    m_tree(q3DynamicAABBTree(allocator)) {
-
+q3BroadPhase::q3BroadPhase(Allocator allocator, q3ContactManager* manager) {
     m_manager = manager;
     pairs = ArrayList<q3ContactPair>::initCapacity(allocator, 64).unwrap();
     moving_boxes = ArrayList<i32>::initCapacity(allocator, 64).unwrap();
-    // aabb_list = ArrayList<Opt<q3AABB>>::init(allocator);
+
+    box_infos = ArrayList<BoxInfo>::init(allocator);
+    empty_slots = ArrayList<usize>::init(allocator);
 }
 
 q3BroadPhase::~q3BroadPhase() {
     pairs.deinit();
     moving_boxes.deinit();
+    box_infos.deinit();
+    empty_slots.deinit();
 }
 
-// void q3Broadphase::Query(q3C) {}
-
 void q3BroadPhase::InsertBox(q3Box* box, const q3AABB& aabb) {
-    i32 id = m_tree.Insert(aabb, box);
-    // i32 id = aabb_list.items.len;
-    // aabb_list.append(aabb).unwrap();
+    i32 id = BoxListInsert(aabb, box);
     box->broadPhaseIndex = id;
     moving_boxes.append(id).unwrap();
 }
 
 void q3BroadPhase::RemoveBox(const q3Box* box) {
-    m_tree.Remove(box->broadPhaseIndex);
-    // aabb_list.remove(box->broadPhaseIndex);
+    BoxListRemove(box->broadPhaseIndex);
 }
 
 void q3BroadPhase::UpdatePairs() {
@@ -63,12 +60,12 @@ void q3BroadPhase::UpdatePairs() {
     // Query the tree with all moving boxes
     for (auto [val, idx] : moving_boxes.items.iter()) {
         m_currentIndex = val;
-        q3AABB aabb = m_tree.GetAABB(m_currentIndex);
+        q3AABB aabb = box_infos.items[m_currentIndex].aabb;
         // @TODO: Use a static and non-static tree and query one against the other.
         // This will potentially prevent (gotta think about this more)
         // time wasted with queries of static bodies against static
         // bodies, and kinematic to kinematic.
-        m_tree.Query(this, aabb);
+        Query(this, aabb);
     }
 
     // Reset the move buffer
@@ -89,8 +86,8 @@ void q3BroadPhase::UpdatePairs() {
     while (i < pairs.items.len) {
         // Add contact to manager
         q3ContactPair* pair = &pairs.items[i];
-        q3Box* A = (q3Box*)m_tree.GetUserData(pair->A);
-        q3Box* B = (q3Box*)m_tree.GetUserData(pair->B);
+        q3Box* A = box_infos.items[pair->A].box;
+        q3Box* B = box_infos.items[pair->B].box;
         m_manager->AddContact(A, B);
         ++i;
 
@@ -104,11 +101,11 @@ void q3BroadPhase::UpdatePairs() {
 }
 
 void q3BroadPhase::Update(i32 id, const q3AABB& aabb) {
-    if (m_tree.Update(id, aabb)) moving_boxes.append(id).unwrap();
+    if (BoxListUpdate(id, aabb)) moving_boxes.append(id).unwrap();
 }
 
 bool q3BroadPhase::TestOverlap(i32 A, i32 B) const {
-    return q3AABBtoAABB(m_tree.GetAABB(A), m_tree.GetAABB(B));
+    return q3AABBtoAABB(box_infos.items[A].aabb, box_infos.items[B].aabb);
 }
 
 inline bool q3BroadPhase::TreeCallBack(i32 index) {
