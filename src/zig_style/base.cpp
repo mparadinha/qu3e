@@ -216,9 +216,9 @@ struct Slice {
 
     Slice<T> sliceToEnd(usize start) const { return this->slice(start, this->len); }
 
-    auto begin() { return this->ptr; }
+    auto begin() const { return this->ptr; }
 
-    auto end() { return this->ptr + this->len; }
+    auto end() const { return this->ptr + this->len; }
 
     IdxIter<T> iter() const { return IdxIter<T>(this->ptr, this->len); }
 };

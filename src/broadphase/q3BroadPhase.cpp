@@ -34,6 +34,7 @@ q3BroadPhase::q3BroadPhase(Allocator allocator, q3ContactManager* manager) :
     m_manager = manager;
     pairs = ArrayList<q3ContactPair>::initCapacity(allocator, 64).unwrap();
     moving_boxes = ArrayList<i32>::initCapacity(allocator, 64).unwrap();
+    // aabb_list = ArrayList<Opt<q3AABB>>::init(allocator);
 }
 
 q3BroadPhase::~q3BroadPhase() {
@@ -45,12 +46,15 @@ q3BroadPhase::~q3BroadPhase() {
 
 void q3BroadPhase::InsertBox(q3Box* box, const q3AABB& aabb) {
     i32 id = m_tree.Insert(aabb, box);
+    // i32 id = aabb_list.items.len;
+    // aabb_list.append(aabb).unwrap();
     box->broadPhaseIndex = id;
     moving_boxes.append(id).unwrap();
 }
 
 void q3BroadPhase::RemoveBox(const q3Box* box) {
     m_tree.Remove(box->broadPhaseIndex);
+    // aabb_list.remove(box->broadPhaseIndex);
 }
 
 void q3BroadPhase::UpdatePairs() {

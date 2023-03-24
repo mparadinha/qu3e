@@ -41,6 +41,9 @@ q3DynamicAABBTree::q3DynamicAABBTree(Allocator allocator) {
     nodes = allocator.alloc<Node>(m_capacity).unwrap();
 
     AddToFreeList(0);
+
+    _nodes = ArrayList<_Node>::init(allocator);
+    empty_slots = ArrayList<usize>::init(allocator);
 }
 
 q3DynamicAABBTree::~q3DynamicAABBTree() {
@@ -48,47 +51,59 @@ q3DynamicAABBTree::~q3DynamicAABBTree() {
 }
 
 i32 q3DynamicAABBTree::Insert(const q3AABB& aabb, void* userData) {
-    i32 id = AllocateNode();
+    // i32 id = AllocateNode();
 
     // Fatten AABB and set height/userdata
-    nodes[id].aabb = aabb;
-    FattenAABB(nodes[id].aabb);
-    nodes[id].userData = userData;
-    nodes[id].height = 0;
+    // nodes[id].aabb = aabb;
+    // FattenAABB(nodes[id].aabb);
+    // nodes[id].userData = userData;
+    // nodes[id].height = 0;
 
-    InsertLeaf(id);
+    // InsertLeaf(id);
+
+    i32 id = Node::Null;
+    if (empty_slots.items.len > 0) {
+        id = empty_slots.pop();
+        _nodes.items[id] = {.aabb = aabb, .userdata = userData};
+    } else {
+        id = _nodes.items.len;
+        _nodes.append({.aabb = aabb, .userdata = userData}).unwrap();
+    }
 
     return id;
 }
 
 void q3DynamicAABBTree::Remove(i32 id) {
-    debug::assert(nodes[id].IsLeaf());
+    // debug::assert(nodes[id].IsLeaf());
 
-    RemoveLeaf(id);
-    DeallocateNode(id);
+    // RemoveLeaf(id);
+    // DeallocateNode(id);
+
+    empty_slots.append(id).unwrap();
 }
 
 bool q3DynamicAABBTree::Update(i32 id, const q3AABB& aabb) {
-    debug::assert(nodes[id].IsLeaf());
+    // debug::assert(nodes[id].IsLeaf());
+    // if (nodes[id].aabb.Contains(aabb)) return false;
 
-    if (nodes[id].aabb.Contains(aabb)) return false;
+    // RemoveLeaf(id);
+    // nodes[id].aabb = aabb;
+    // InsertLeaf(id);
 
-    RemoveLeaf(id);
-
-    nodes[id].aabb = aabb;
-    FattenAABB(nodes[id].aabb);
-
-    InsertLeaf(id);
+    if (_nodes.items[id].aabb.Contains(aabb)) return false;
+    _nodes.items[id].aabb = aabb;
 
     return true;
 }
 
 void* q3DynamicAABBTree::GetUserData(i32 id) const {
-    return nodes[id].userData;
+    // return nodes[id].userData;
+    return _nodes.items[id].userdata;
 }
 
 const q3AABB& q3DynamicAABBTree::GetFatAABB(i32 id) const {
-    return nodes[id].aabb;
+    // return nodes[id].aabb;
+    return _nodes.items[id].aabb;
 }
 
 i32 q3DynamicAABBTree::Balance(i32 iA) {

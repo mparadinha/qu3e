@@ -51,6 +51,14 @@ struct q3DynamicAABBTree {
     i32 m_capacity; // Max capacity of nodes
     i32 free_node_index;
 
+    struct _Node {
+        q3AABB aabb;
+        void* userdata;
+    };
+
+    ArrayList<_Node> _nodes;
+    ArrayList<usize> empty_slots;
+
     q3DynamicAABBTree(Allocator allocator);
     ~q3DynamicAABBTree();
 
@@ -62,22 +70,10 @@ struct q3DynamicAABBTree {
     void* GetUserData(i32 id) const;
     const q3AABB& GetFatAABB(i32 id) const;
 
-    inline i32 AllocateNode();
-    inline void DeallocateNode(i32 index);
-    i32 Balance(i32 index);
-    void InsertLeaf(i32 index);
-    void RemoveLeaf(i32 index);
-
-    // Correct AABB hierarchy heights and AABBs starting at supplied
-    // index traversing up the heirarchy
-    void SyncHeirarchy(i32 index);
-    // Insert nodes at a given index until m_capacity into the free list
-    void AddToFreeList(i32 index);
-
     template <typename T>
     inline void Query(T* cb, const q3AABB& aabb) const {
-        for (auto [node, idx] : nodes.iter()) {
-            if (idx == free_node_index or !node.IsLeaf()) continue;
+        for (auto [node, idx] : _nodes.items.iter()) {
+            if (mem::indexOfScalar(empty_slots.items, idx).is_not_null()) continue;
             if (q3AABBtoAABB(aabb, node.aabb)) {
                 if (!cb->TreeCallBack(idx)) return;
             }
@@ -90,8 +86,8 @@ struct q3DynamicAABBTree {
         q3Vec3 p0 = rayCast.start;
         q3Vec3 p1 = p0 + rayCast.dir * rayCast.t;
 
-        for (auto [node, idx] : nodes.iter()) {
-            if (idx == free_node_index or !node.IsLeaf()) continue;
+        for (auto [node, idx] : _nodes.items.iter()) {
+            if (mem::indexOfScalar(empty_slots.items, idx).is_not_null()) continue;
 
             q3Vec3 e = node.aabb.max - node.aabb.min;
             q3Vec3 d = p1 - p0;
@@ -115,4 +111,16 @@ struct q3DynamicAABBTree {
             if (!cb->TreeCallBack(idx)) return;
         }
     }
+
+private:
+    void InsertLeaf(i32 index);
+    void RemoveLeaf(i32 index);
+    i32 Balance(i32 index);
+    inline i32 AllocateNode();
+    inline void DeallocateNode(i32 index);
+    // Correct AABB hierarchy heights and AABBs starting at supplied
+    // index traversing up the heirarchy
+    void SyncHeirarchy(i32 index);
+    // Insert nodes at a given index until m_capacity into the free list
+    void AddToFreeList(i32 index);
 };

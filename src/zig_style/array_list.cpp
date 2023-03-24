@@ -74,5 +74,24 @@ struct ArrayList {
         this->items.len = new_len;
     }
 
+    T pop() {
+        auto val = this->items[this->items.len - 1];
+        this->items.len -= 1;
+        return val;
+    }
+
+    Opt<T> popOrNull() {
+        if (this->items.len == 0) return Null;
+        return this->pop();
+    }
+
+    T swapRemove(usize i) {
+        if (this->items.len - 1 == i) return this->pop();
+
+        auto old_item = this->items[i];
+        this->items[i] = this->pop();
+        return old_item;
+    }
+
     Slice<T> allocatedSlice() { return Slice<T>(this->items.ptr, this->capacity); }
 };

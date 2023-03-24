@@ -37,13 +37,12 @@ struct q3BroadPhase {
     q3ContactManager* m_manager;
     ArrayList<q3ContactPair> pairs;
     ArrayList<i32> moving_boxes;
+    // ArrayList<q3AABB> aabb_list;
     q3DynamicAABBTree m_tree;
     i32 m_currentIndex;
 
     q3BroadPhase(Allocator allocator, q3ContactManager* manager);
     ~q3BroadPhase();
-
-    // void Query();
 
     void InsertBox(q3Box* shape, const q3AABB& aabb);
     void RemoveBox(const q3Box* shape);
@@ -53,4 +52,6 @@ struct q3BroadPhase {
     void Update(i32 id, const q3AABB& aabb);
     bool TestOverlap(i32 A, i32 B) const;
     bool TreeCallBack(i32 index);
+
+    // void Query();
 };
