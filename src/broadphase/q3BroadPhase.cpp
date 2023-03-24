@@ -63,7 +63,7 @@ void q3BroadPhase::UpdatePairs() {
     // Query the tree with all moving boxes
     for (auto [val, idx] : moving_boxes.items.iter()) {
         m_currentIndex = val;
-        q3AABB aabb = m_tree.GetFatAABB(m_currentIndex);
+        q3AABB aabb = m_tree.GetAABB(m_currentIndex);
         // @TODO: Use a static and non-static tree and query one against the other.
         // This will potentially prevent (gotta think about this more)
         // time wasted with queries of static bodies against static
@@ -108,7 +108,7 @@ void q3BroadPhase::Update(i32 id, const q3AABB& aabb) {
 }
 
 bool q3BroadPhase::TestOverlap(i32 A, i32 B) const {
-    return q3AABBtoAABB(m_tree.GetFatAABB(A), m_tree.GetFatAABB(B));
+    return q3AABBtoAABB(m_tree.GetAABB(A), m_tree.GetAABB(B));
 }
 
 inline bool q3BroadPhase::TreeCallBack(i32 index) {
