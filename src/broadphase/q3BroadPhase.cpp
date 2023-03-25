@@ -64,8 +64,7 @@ void q3BroadPhase::InsertBox(q3Box* box, const q3AABB& aabb) {
     moving_boxes.append(id).unwrap();
 }
 
-// TODO: see if I can remove all these const functions
-BoxInfo q3BroadPhase::GetBoxInfo(i32 id) const { return boxes.items[id]; }
+BoxInfo q3BroadPhase::GetBoxInfo(i32 id) { return boxes.items[id]; }
 
 void q3BroadPhase::RemoveBox(const q3Box* box) {
     i32 id = box->broadPhaseIndex;
@@ -77,14 +76,17 @@ void q3BroadPhase::UpdatePairs(q3ContactManager* manager) {
     pairs.shrinkRetainingCapacity(0);
 
     // Query the tree with all moving boxes
-    for (auto [val, idx] : moving_boxes.items.iter()) {
-        m_currentIndex = val;
-        q3AABB aabb = GetBoxInfo(m_currentIndex).aabb;
-        // @TODO: Use a static and non-static tree and query one against the other.
-        // This will potentially prevent (gotta think about this more)
-        // time wasted with queries of static bodies against static
-        // bodies, and kinematic to kinematic.
-        Query(this, aabb);
+    for (auto moving_box_idx : moving_boxes.items) {
+        q3AABB aabb = GetBoxInfo(moving_box_idx).aabb;
+        for (auto [node, index] : boxes.items.iter()) {
+            if (q3AABBtoAABB(aabb, node.aabb)) {
+                if (index == moving_box_idx) break; // Cannot collide with self
+                i32 iA = q3Min(index, moving_box_idx);
+                i32 iB = q3Max(index, moving_box_idx);
+                pairs.append({.A = iA, .B = iB}).unwrap();
+                break;
+            }
+        }
     }
 
     moving_boxes.shrinkRetainingCapacity(0);
@@ -97,17 +99,6 @@ void q3BroadPhase::Update(i32 id, const q3AABB& aabb) {
     }
 }
 
-bool q3BroadPhase::TestOverlap(i32 A, i32 B) const {
+bool q3BroadPhase::TestOverlap(i32 A, i32 B) {
     return q3AABBtoAABB(GetBoxInfo(A).aabb, GetBoxInfo(B).aabb);
-}
-
-// TODO: does this one need to be public?
-inline bool q3BroadPhase::TreeCallBack(i32 index) {
-    // Cannot collide with self
-    if (index == m_currentIndex) return true;
-
-    i32 iA = q3Min(index, m_currentIndex);
-    i32 iB = q3Max(index, m_currentIndex);
-    pairs.append({.A = iA, .B = iB}).unwrap();
-    return true;
 }

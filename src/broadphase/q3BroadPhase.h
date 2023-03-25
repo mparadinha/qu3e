@@ -42,7 +42,6 @@ struct BoxInfo {
 struct q3BroadPhase {
     ArrayList<q3ContactPair> pairs;
     ArrayList<i32> moving_boxes;
-    i32 m_currentIndex;
     ArrayList<BoxInfo> boxes;
     ArrayList<usize> unused_boxes;
 
@@ -51,16 +50,15 @@ struct q3BroadPhase {
 
     void InsertBox(q3Box* shape, const q3AABB& aabb);
     void RemoveBox(const q3Box* shape);
-    BoxInfo GetBoxInfo(i32 id) const;
+    BoxInfo GetBoxInfo(i32 id);
     // Generates the contact list. All previous contacts are returned to the
     // allocator before generation occurs.
     void UpdatePairs(q3ContactManager* manager);
     void Update(i32 id, const q3AABB& aabb);
-    bool TestOverlap(i32 A, i32 B) const;
-    bool TreeCallBack(i32 index);
+    bool TestOverlap(i32 A, i32 B);
 
     template <typename T>
-    inline void Query(T* cb, const q3AABB& aabb) const {
+    inline void Query(T* cb, const q3AABB& aabb) {
         for (auto [node, idx] : boxes.items.iter()) {
             if (q3AABBtoAABB(aabb, node.aabb)) {
                 if (!cb->TreeCallBack(idx)) return;
@@ -69,7 +67,7 @@ struct q3BroadPhase {
     }
 
     template <typename T>
-    void Query(T* cb, q3RaycastData& rayCast) const {
+    void Query(T* cb, q3RaycastData& rayCast) {
         const r32 k_epsilon = r32(1.0e-6);
         q3Vec3 p0 = rayCast.start;
         q3Vec3 p1 = p0 + rayCast.dir * rayCast.t;

@@ -183,7 +183,7 @@ void q3Scene::SetAllowSleep(bool allowSleep) {
     }
 }
 
-void q3Scene::QueryAABB(q3QueryCallback* cb, const q3AABB& aabb) const {
+void q3Scene::QueryAABB(q3QueryCallback* cb, const q3AABB& aabb) {
     struct SceneQueryWrapper {
         bool TreeCallBack(i32 id) {
             q3AABB aabb;
@@ -197,7 +197,7 @@ void q3Scene::QueryAABB(q3QueryCallback* cb, const q3AABB& aabb) const {
         }
 
         q3QueryCallback* cb;
-        const q3BroadPhase* broadPhase;
+        q3BroadPhase* broadPhase;
         q3AABB m_aabb;
     };
 
@@ -208,7 +208,7 @@ void q3Scene::QueryAABB(q3QueryCallback* cb, const q3AABB& aabb) const {
     contact_manager.m_broadphase.Query(&wrapper, aabb);
 }
 
-void q3Scene::QueryPoint(q3QueryCallback* cb, const q3Vec3& point) const {
+void q3Scene::QueryPoint(q3QueryCallback* cb, const q3Vec3& point) {
     struct SceneQueryWrapper {
         bool TreeCallBack(i32 id) {
             q3Box* box = broadPhase->GetBoxInfo(id).box;
@@ -217,7 +217,7 @@ void q3Scene::QueryPoint(q3QueryCallback* cb, const q3Vec3& point) const {
         }
 
         q3QueryCallback* cb;
-        const q3BroadPhase* broadPhase;
+        q3BroadPhase* broadPhase;
         q3Vec3 m_point;
     };
 
@@ -233,7 +233,7 @@ void q3Scene::QueryPoint(q3QueryCallback* cb, const q3Vec3& point) const {
     contact_manager.m_broadphase.Query(&wrapper, aabb);
 }
 
-void q3Scene::RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) const {
+void q3Scene::RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) {
     struct SceneQueryWrapper {
         bool TreeCallBack(i32 id) {
             q3Box* box = broadPhase->GetBoxInfo(id).box;
@@ -244,7 +244,7 @@ void q3Scene::RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) const {
         }
 
         q3QueryCallback* cb;
-        const q3BroadPhase* broadPhase;
+        q3BroadPhase* broadPhase;
         q3RaycastData* m_rayCast;
     };
 
@@ -255,7 +255,7 @@ void q3Scene::RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) const {
     contact_manager.m_broadphase.Query(&wrapper, rayCast);
 }
 
-void q3Scene::Render(q3Render* render) const {
+void q3Scene::Render(q3Render* render) {
     // clang-format off
     const i32 box_indices[36] = {
         1, 7, 5,     1, 3, 7,     1, 4, 3,     1, 2, 4,     3, 8, 7,     3, 4, 8,
