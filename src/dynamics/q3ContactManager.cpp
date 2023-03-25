@@ -32,7 +32,7 @@ distribution.
 
 q3ContactManager::q3ContactManager(Allocator allocator) :
     contacts(LinkedList<q3ContactConstraint>::init(allocator)),
-    m_broadphase(allocator, this) {}
+    m_broadphase(allocator) {}
 
 void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
     q3Body* bodyA = A->body;
@@ -78,7 +78,7 @@ void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
 }
 
 void q3ContactManager::FindNewContacts() {
-    m_broadphase.UpdatePairs();
+    m_broadphase.UpdatePairs(this);
 }
 
 void q3ContactManager::RemoveContact(q3ContactConstraint* contact) {

@@ -28,10 +28,9 @@ distribution.
 #include "../common/q3Geometry.h"
 #include "../dynamics/q3ContactManager.h"
 
-q3BroadPhase::q3BroadPhase(Allocator allocator, q3ContactManager* manager) :
+q3BroadPhase::q3BroadPhase(Allocator allocator) :
     m_tree(q3DynamicAABBTree(allocator)) {
 
-    m_manager = manager;
     pairs = ArrayList<q3ContactPair>::initCapacity(allocator, 64).unwrap();
     moving_boxes = ArrayList<i32>::initCapacity(allocator, 64).unwrap();
 }
@@ -53,7 +52,7 @@ void q3BroadPhase::RemoveBox(const q3Box* box) {
     m_tree.Remove(box->broadPhaseIndex);
 }
 
-void q3BroadPhase::UpdatePairs() {
+void q3BroadPhase::UpdatePairs(q3ContactManager* manager) {
     pairs.shrinkRetainingCapacity(0);
 
     // Query the tree with all moving boxes
@@ -70,16 +69,6 @@ void q3BroadPhase::UpdatePairs() {
     // Reset the move buffer
     moving_boxes.shrinkRetainingCapacity(0);
 
-    // Sort pairs to expose duplicates
-    std::sort(
-        pairs.items.ptr, pairs.items.ptr + pairs.items.len,
-        [](const auto& lhs, const auto& rhs) -> bool {
-            if (lhs.A < rhs.A) return true;
-            if (lhs.A == rhs.A) return lhs.B < rhs.B;
-            return false;
-        }
-    );
-
     // Queue manifolds for solving
     i32 i = 0;
     while (i < pairs.items.len) {
@@ -87,15 +76,8 @@ void q3BroadPhase::UpdatePairs() {
         q3ContactPair* pair = &pairs.items[i];
         q3Box* A = (q3Box*)m_tree.GetUserData(pair->A);
         q3Box* B = (q3Box*)m_tree.GetUserData(pair->B);
-        m_manager->AddContact(A, B);
+        manager->AddContact(A, B);
         ++i;
-
-        // Skip duplicate pairs by iterating i until we find a unique pair
-        while (i < pairs.items.len) {
-            q3ContactPair* potentialDup = &pairs.items[i];
-            if (pair->A != potentialDup->A || pair->B != potentialDup->B) break;
-            ++i;
-        }
     }
 }
 

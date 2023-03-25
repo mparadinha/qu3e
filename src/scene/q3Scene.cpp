@@ -102,11 +102,6 @@ void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 st
 }
 
 void q3Scene::Step() {
-    if (new_box) {
-        contact_manager.m_broadphase.UpdatePairs();
-        new_box = false;
-    }
-
     contact_manager.TestCollisions();
 
     for (q3Body* body : bodies.ptrIter()) body->m_flags &= ~q3Body::eIsland;
