@@ -75,5 +75,16 @@ struct ArrayList {
         return {};
     }
 
+    T pop() {
+        auto val = this->items[this->items.len - 1];
+        this->items.len -= 1;
+        return val;
+    }
+
+    Opt<T> popOrNull() {
+        if (this->items.len == 0) return Null;
+        return this->pop();
+    }
+
     Slice<T> allocatedSlice() { return Slice<T>(this->items.ptr, this->capacity); }
 };

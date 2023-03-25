@@ -55,7 +55,6 @@ struct q3ContactManager;
 struct q3ContactPair;
 struct q3ContactSolver;
 struct q3ContactState;
-struct q3DynamicAABBTree;
 struct q3HalfSpace;
 struct q3Island;
 struct q3Manifold;

@@ -28,28 +28,49 @@ distribution.
 #include "../common/q3Geometry.h"
 #include "../dynamics/q3ContactManager.h"
 
-q3BroadPhase::q3BroadPhase(Allocator allocator) :
-    m_tree(q3DynamicAABBTree(allocator)) {
+inline q3AABB FatAABB(q3AABB aabb) {
+    const r32 k_fattener = r32(0.5);
+    q3Vec3 v(k_fattener, k_fattener, k_fattener);
+    aabb.min -= v;
+    aabb.max += v;
+    return aabb;
+}
 
+q3BroadPhase::q3BroadPhase(Allocator allocator) {
     pairs = ArrayList<q3ContactPair>::initCapacity(allocator, 64).unwrap();
     moving_boxes = ArrayList<i32>::initCapacity(allocator, 64).unwrap();
+    boxes = ArrayList<BoxInfo>::init(allocator);
+    unused_boxes = ArrayList<usize>::init(allocator);
 }
 
 q3BroadPhase::~q3BroadPhase() {
     pairs.deinit();
     moving_boxes.deinit();
+    boxes.deinit();
+    unused_boxes.deinit();
 }
 
-// void q3Broadphase::Query(q3C) {}
-
 void q3BroadPhase::InsertBox(q3Box* box, const q3AABB& aabb) {
-    i32 id = m_tree.Insert(aabb, box);
+    i32 id = -1;
+    if (opt_capture(unused_boxes.popOrNull(), idx)) {
+        id = intCast<i32>(idx);
+    } else {
+        id = intCast<i32>(boxes.items.len);
+        boxes.append({}).unwrap();
+    }
+
+    boxes.items[id] = {.box = box, .aabb = aabb};
     box->broadPhaseIndex = id;
     moving_boxes.append(id).unwrap();
 }
 
+// TODO: see if I can remove all these const functions
+BoxInfo q3BroadPhase::GetBoxInfo(i32 id) const { return boxes.items[id]; }
+
 void q3BroadPhase::RemoveBox(const q3Box* box) {
-    m_tree.Remove(box->broadPhaseIndex);
+    i32 id = box->broadPhaseIndex;
+    boxes.items[id] = undefined;
+    unused_boxes.append(intCast<usize>(id)).unwrap();
 }
 
 void q3BroadPhase::UpdatePairs(q3ContactManager* manager) {
@@ -58,37 +79,29 @@ void q3BroadPhase::UpdatePairs(q3ContactManager* manager) {
     // Query the tree with all moving boxes
     for (auto [val, idx] : moving_boxes.items.iter()) {
         m_currentIndex = val;
-        q3AABB aabb = m_tree.GetFatAABB(m_currentIndex);
+        q3AABB aabb = GetBoxInfo(m_currentIndex).aabb;
         // @TODO: Use a static and non-static tree and query one against the other.
         // This will potentially prevent (gotta think about this more)
         // time wasted with queries of static bodies against static
         // bodies, and kinematic to kinematic.
-        m_tree.Query(this, aabb);
+        Query(this, aabb);
     }
 
-    // Reset the move buffer
     moving_boxes.shrinkRetainingCapacity(0);
-
-    // Queue manifolds for solving
-    i32 i = 0;
-    while (i < pairs.items.len) {
-        // Add contact to manager
-        q3ContactPair* pair = &pairs.items[i];
-        q3Box* A = (q3Box*)m_tree.GetUserData(pair->A);
-        q3Box* B = (q3Box*)m_tree.GetUserData(pair->B);
-        manager->AddContact(A, B);
-        ++i;
-    }
 }
 
 void q3BroadPhase::Update(i32 id, const q3AABB& aabb) {
-    if (m_tree.Update(id, aabb)) moving_boxes.append(id).unwrap();
+    if (!boxes.items[id].aabb.Contains(aabb)) {
+        boxes.items[id].aabb = FatAABB(aabb);
+        moving_boxes.append(id).unwrap();
+    }
 }
 
 bool q3BroadPhase::TestOverlap(i32 A, i32 B) const {
-    return q3AABBtoAABB(m_tree.GetFatAABB(A), m_tree.GetFatAABB(B));
+    return q3AABBtoAABB(GetBoxInfo(A).aabb, GetBoxInfo(B).aabb);
 }
 
+// TODO: does this one need to be public?
 inline bool q3BroadPhase::TreeCallBack(i32 index) {
     // Cannot collide with self
     if (index == m_currentIndex) return true;

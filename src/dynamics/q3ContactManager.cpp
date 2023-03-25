@@ -79,6 +79,13 @@ void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
 
 void q3ContactManager::FindNewContacts() {
     m_broadphase.UpdatePairs(this);
+    // queue manifolds for solving
+    for (auto pair : m_broadphase.pairs.items) {
+        AddContact(
+            m_broadphase.GetBoxInfo(pair.A).box,
+            m_broadphase.GetBoxInfo(pair.B).box
+        );
+    }
 }
 
 void q3ContactManager::RemoveContact(q3ContactConstraint* contact) {

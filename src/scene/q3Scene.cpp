@@ -187,7 +187,7 @@ void q3Scene::QueryAABB(q3QueryCallback* cb, const q3AABB& aabb) const {
     struct SceneQueryWrapper {
         bool TreeCallBack(i32 id) {
             q3AABB aabb;
-            q3Box* box = (q3Box*)broadPhase->m_tree.GetUserData(id);
+            q3Box* box = broadPhase->GetBoxInfo(id).box;
 
             box->ComputeAABB(box->body->m_tx, &aabb);
 
@@ -205,13 +205,13 @@ void q3Scene::QueryAABB(q3QueryCallback* cb, const q3AABB& aabb) const {
     wrapper.m_aabb = aabb;
     wrapper.broadPhase = &contact_manager.m_broadphase;
     wrapper.cb = cb;
-    contact_manager.m_broadphase.m_tree.Query(&wrapper, aabb);
+    contact_manager.m_broadphase.Query(&wrapper, aabb);
 }
 
 void q3Scene::QueryPoint(q3QueryCallback* cb, const q3Vec3& point) const {
     struct SceneQueryWrapper {
         bool TreeCallBack(i32 id) {
-            q3Box* box = (q3Box*)broadPhase->m_tree.GetUserData(id);
+            q3Box* box = broadPhase->GetBoxInfo(id).box;
             if (box->TestPoint(box->body->m_tx, m_point)) { cb->ReportShape(box); }
             return true;
         }
@@ -230,13 +230,13 @@ void q3Scene::QueryPoint(q3QueryCallback* cb, const q3Vec3& point) const {
     q3AABB aabb;
     aabb.min = point - v;
     aabb.max = point + v;
-    contact_manager.m_broadphase.m_tree.Query(&wrapper, aabb);
+    contact_manager.m_broadphase.Query(&wrapper, aabb);
 }
 
 void q3Scene::RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) const {
     struct SceneQueryWrapper {
         bool TreeCallBack(i32 id) {
-            q3Box* box = (q3Box*)broadPhase->m_tree.GetUserData(id);
+            q3Box* box = broadPhase->GetBoxInfo(id).box;
 
             if (box->Raycast(box->body->m_tx, m_rayCast)) { return cb->ReportShape(box); }
 
@@ -252,7 +252,7 @@ void q3Scene::RayCast(q3QueryCallback* cb, q3RaycastData& rayCast) const {
     wrapper.m_rayCast = &rayCast;
     wrapper.broadPhase = &contact_manager.m_broadphase;
     wrapper.cb = cb;
-    contact_manager.m_broadphase.m_tree.Query(&wrapper, rayCast);
+    contact_manager.m_broadphase.Query(&wrapper, rayCast);
 }
 
 void q3Scene::Render(q3Render* render) const {
