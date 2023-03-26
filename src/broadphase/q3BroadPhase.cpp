@@ -27,6 +27,7 @@ distribution.
 #include "../collision/q3Box.h"
 #include "../common/q3Geometry.h"
 #include "../dynamics/q3ContactManager.h"
+#include "../math/q3Math.h"
 
 inline q3AABB FatAABB(q3AABB aabb) {
     const r32 k_fattener = r32(0.5);
@@ -38,14 +39,12 @@ inline q3AABB FatAABB(q3AABB aabb) {
 
 q3BroadPhase::q3BroadPhase(Allocator allocator) {
     pairs = ArrayList<q3ContactPair>::initCapacity(allocator, 64).unwrap();
-    moving_boxes = ArrayList<i32>::initCapacity(allocator, 64).unwrap();
     boxes = ArrayList<BoxInfo>::init(allocator);
     unused_boxes = ArrayList<usize>::init(allocator);
 }
 
 q3BroadPhase::~q3BroadPhase() {
     pairs.deinit();
-    moving_boxes.deinit();
     boxes.deinit();
     unused_boxes.deinit();
 }
@@ -61,7 +60,6 @@ void q3BroadPhase::InsertBox(q3Box* box, const q3AABB& aabb) {
 
     boxes.items[id] = {.box = box, .aabb = aabb};
     box->broadPhaseIndex = id;
-    moving_boxes.append(id).unwrap();
 }
 
 BoxInfo q3BroadPhase::GetBoxInfo(i32 id) { return boxes.items[id]; }
@@ -75,27 +73,21 @@ void q3BroadPhase::RemoveBox(const q3Box* box) {
 void q3BroadPhase::UpdatePairs(q3ContactManager* manager) {
     pairs.shrinkRetainingCapacity(0);
 
-    // Query the tree with all moving boxes
-    for (auto moving_box_idx : moving_boxes.items) {
-        q3AABB aabb = GetBoxInfo(moving_box_idx).aabb;
-        for (auto [node, index] : boxes.items.iter()) {
-            if (q3AABBtoAABB(aabb, node.aabb)) {
-                if (index == moving_box_idx) break; // Cannot collide with self
-                i32 iA = q3Min(index, moving_box_idx);
-                i32 iB = q3Max(index, moving_box_idx);
+    for (auto [test_box, test_idx] : boxes.items.iter()) {
+        for (auto [box, box_idx] : boxes.items.iter()) {
+            if (q3AABBtoAABB(test_box.aabb, box.aabb)) {
+                if (box_idx == test_idx) continue; // Cannot collide with self
+                i32 iA = math::min(box_idx, test_idx);
+                i32 iB = math::max(box_idx, test_idx);
                 pairs.append({.A = iA, .B = iB}).unwrap();
-                break;
             }
         }
     }
-
-    moving_boxes.shrinkRetainingCapacity(0);
 }
 
 void q3BroadPhase::Update(i32 id, const q3AABB& aabb) {
     if (!boxes.items[id].aabb.Contains(aabb)) {
         boxes.items[id].aabb = FatAABB(aabb);
-        moving_boxes.append(id).unwrap();
     }
 }
 

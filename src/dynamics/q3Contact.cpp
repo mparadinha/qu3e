@@ -25,6 +25,14 @@ distribution.
 
 #include "q3Contact.h"
 
+r32 q3MixRestitution(const q3Box* A, const q3Box* B) {
+    return q3Max(A->restitution, B->restitution);
+}
+
+r32 q3MixFriction(const q3Box* A, const q3Box* B) {
+    return std::sqrt(A->friction * B->friction);
+}
+
 void q3Manifold::SetPair(q3Box* a, q3Box* b) {
     this->A = a;
     this->B = b;

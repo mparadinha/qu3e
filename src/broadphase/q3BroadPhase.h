@@ -41,7 +41,6 @@ struct BoxInfo {
 
 struct q3BroadPhase {
     ArrayList<q3ContactPair> pairs;
-    ArrayList<i32> moving_boxes;
     ArrayList<BoxInfo> boxes;
     ArrayList<usize> unused_boxes;
 
