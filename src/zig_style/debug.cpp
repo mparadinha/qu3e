@@ -54,18 +54,39 @@ static void printStackTrace(FILE* file) {
         Dwfl_Line* module_line = dwfl_module_getsrc(module, addr);
         if (module_line) {
             filename = dwfl_lineinfo(module_line, &addr, &line, &column, NULL, NULL);
+            // TODO: free this ^
         }
+
+        // turn filename into a canonical path (resolve symlinks, remove ../ etc.)
+        filename = realpath(filename, NULL);
+        // TODO: free this ^
 
         // try to demangle c++ function names if needed
         int demangle_status;
         char* demangled_name = abi::__cxa_demangle(fn_name, NULL, NULL, &demangle_status);
+        // TODO: free this ^
         fn_name = demangle_status == 0 ? demangled_name : fn_name;
 
-        fprintf(file, "called from: ");
         if (filename && line != -1 && column != -1) {
-            fprintf(file, "%s @ %s:%d:%d\n", fn_name, filename, line, column);
-        } else {
+            // fprintf(file, "called from: %s @ %s:%d:%d\n", fn_name, filename, line, column);
+            const char* bold_code = "\033[1m";
+            const char* reset_code = "\033[0m";
+            const char* green_code = "\033[92;1m";
+            fprintf(file, "%s%s:%d:%d: %s", bold_code, filename, line, column, reset_code);
             fprintf(file, "%s\n", fn_name);
+            FILE* current_file = fopen(filename, "r");
+            for (size_t line_idx = 0; line_idx < line; line_idx++) {
+                char linebuf[0x1000];
+                char* line_content = fgets(&linebuf[0], 0x1000, current_file);
+                if (*line_content == EOF) break;
+                if (line_idx + 1 == line) {
+                    fprintf(file, "%s", line_content);
+                    fprintf(file, "%s%*c%s\n", green_code, column, '^', reset_code);
+                }
+            }
+            fclose(current_file);
+        } else {
+            fprintf(file, "called from: %s\n", fn_name);
         }
     }
 

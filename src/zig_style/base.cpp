@@ -260,6 +260,8 @@ template <typename T, usize N>
 struct Array {
     T* ptr;
 
+    const usize len = N;
+
     Array() { this->ptr = this->buf; }
 
     Array(T arr[N]) { this->ptr = this->buf = arr; }
@@ -442,6 +444,7 @@ static const char* errorName(Error err) {
         case Error::UnexpectedEndOfFile: return "UnexpectedEndOfFile";
         case Error::ParseError: return "ParseError";
     }
+    unreachable();
 }
 
 template <typename ErrUnT>

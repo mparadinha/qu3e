@@ -26,6 +26,7 @@ distribution.
 #pragma once
 
 #include "../common/q3Types.h"
+#include "../math/q3Vec3.h"
 #include "../common/q3Geometry.h"
 
 struct q3ContactPair {
@@ -33,55 +34,31 @@ struct q3ContactPair {
     i32 B;
 };
 
+struct BoxInfo {
+    q3Box* box;
+    q3AABB aabb;
+};
+
 struct q3BroadPhase {
-    struct BoxInfo {
-        q3AABB aabb;
-        q3Box* box;
-    };
-
-    q3ContactManager* m_manager;
     ArrayList<q3ContactPair> pairs;
-    ArrayList<i32> moving_boxes;
-    ArrayList<BoxInfo> box_infos;
-    ArrayList<usize> empty_slots;
-    i32 m_currentIndex;
+    ArrayList<BoxInfo> boxes;
+    ArrayList<usize> unused_boxes;
 
-    q3BroadPhase(Allocator allocator, q3ContactManager* manager);
+    q3BroadPhase(Allocator allocator);
     ~q3BroadPhase();
 
     void InsertBox(q3Box* shape, const q3AABB& aabb);
     void RemoveBox(const q3Box* shape);
+    BoxInfo GetBoxInfo(i32 id);
     // Generates the contact list. All previous contacts are returned to the
     // allocator before generation occurs.
-    void UpdatePairs(void);
+    void UpdatePairs(q3ContactManager* manager);
     void Update(i32 id, const q3AABB& aabb);
-    bool TestOverlap(i32 A, i32 B) const;
-    bool TreeCallBack(i32 index);
-
-    i32 BoxListInsert(const q3AABB& aabb, q3Box* box) {
-        BoxInfo box_info = {.aabb = aabb, .box = box};
-        if (empty_slots.items.len > 0) {
-            i32 id = empty_slots.pop();
-            box_infos.items[id] = box_info;
-            return id;
-        } else {
-            box_infos.append(box_info).unwrap();
-            return box_infos.items.len - 1;
-        }
-    }
-
-    void BoxListRemove(i32 id) { empty_slots.append(id).unwrap(); }
-
-    bool BoxListUpdate(i32 id, const q3AABB& aabb) {
-        if (box_infos.items[id].aabb.Contains(aabb)) return false;
-        box_infos.items[id].aabb = aabb;
-        return true;
-    }
+    bool TestOverlap(i32 A, i32 B);
 
     template <typename T>
-    inline void Query(T* cb, const q3AABB& aabb) const {
-        for (auto [node, idx] : box_infos.items.iter()) {
-            if (mem::indexOfScalar(empty_slots.items, idx).is_not_null()) continue;
+    inline void Query(T* cb, const q3AABB& aabb) {
+        for (auto [node, idx] : boxes.items.iter()) {
             if (q3AABBtoAABB(aabb, node.aabb)) {
                 if (!cb->TreeCallBack(idx)) return;
             }
@@ -89,14 +66,12 @@ struct q3BroadPhase {
     }
 
     template <typename T>
-    void Query(T* cb, q3RaycastData& rayCast) const {
+    void Query(T* cb, q3RaycastData& rayCast) {
         const r32 k_epsilon = r32(1.0e-6);
         q3Vec3 p0 = rayCast.start;
         q3Vec3 p1 = p0 + rayCast.dir * rayCast.t;
 
-        for (auto [node, idx] : box_infos.items.iter()) {
-            if (mem::indexOfScalar(empty_slots.items, idx).is_not_null()) continue;
-
+        for (auto [node, idx] : boxes.items.iter()) {
             q3Vec3 e = node.aabb.max - node.aabb.min;
             q3Vec3 d = p1 - p0;
             q3Vec3 m = p0 + p1 - node.aabb.min - node.aabb.max;

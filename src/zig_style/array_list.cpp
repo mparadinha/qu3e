@@ -72,6 +72,18 @@ struct ArrayList {
     ErrOrVoid resize(usize new_len) {
         this->ensureTotalCapacity(new_len);
         this->items.len = new_len;
+        return {};
+    }
+
+    T pop() {
+        auto val = this->items[this->items.len - 1];
+        this->items.len -= 1;
+        return val;
+    }
+
+    Opt<T> popOrNull() {
+        if (this->items.len == 0) return Null;
+        return this->pop();
     }
 
     T pop() {

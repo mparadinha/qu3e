@@ -27,93 +27,70 @@ distribution.
 #include "../collision/q3Box.h"
 #include "../common/q3Geometry.h"
 #include "../dynamics/q3ContactManager.h"
+#include "../math/q3Math.h"
 
-q3BroadPhase::q3BroadPhase(Allocator allocator, q3ContactManager* manager) {
-    m_manager = manager;
+inline q3AABB FatAABB(q3AABB aabb) {
+    const r32 k_fattener = r32(0.5);
+    q3Vec3 v(k_fattener, k_fattener, k_fattener);
+    aabb.min -= v;
+    aabb.max += v;
+    return aabb;
+}
+
+q3BroadPhase::q3BroadPhase(Allocator allocator) {
     pairs = ArrayList<q3ContactPair>::initCapacity(allocator, 64).unwrap();
-    moving_boxes = ArrayList<i32>::initCapacity(allocator, 64).unwrap();
-
-    box_infos = ArrayList<BoxInfo>::init(allocator);
-    empty_slots = ArrayList<usize>::init(allocator);
+    boxes = ArrayList<BoxInfo>::init(allocator);
+    unused_boxes = ArrayList<usize>::init(allocator);
 }
 
 q3BroadPhase::~q3BroadPhase() {
     pairs.deinit();
-    moving_boxes.deinit();
-    box_infos.deinit();
-    empty_slots.deinit();
+    boxes.deinit();
+    unused_boxes.deinit();
 }
 
 void q3BroadPhase::InsertBox(q3Box* box, const q3AABB& aabb) {
-    i32 id = BoxListInsert(aabb, box);
+    i32 id = -1;
+    if (opt_capture(unused_boxes.popOrNull(), idx)) {
+        id = intCast<i32>(idx);
+    } else {
+        id = intCast<i32>(boxes.items.len);
+        boxes.append({}).unwrap();
+    }
+
+    boxes.items[id] = {.box = box, .aabb = aabb};
     box->broadPhaseIndex = id;
-    moving_boxes.append(id).unwrap();
+}
+
+BoxInfo q3BroadPhase::GetBoxInfo(i32 id) {
+    return boxes.items[id];
 }
 
 void q3BroadPhase::RemoveBox(const q3Box* box) {
-    BoxListRemove(box->broadPhaseIndex);
+    i32 id = box->broadPhaseIndex;
+    boxes.items[id] = undefined;
+    unused_boxes.append(intCast<usize>(id)).unwrap();
 }
 
-void q3BroadPhase::UpdatePairs() {
+void q3BroadPhase::UpdatePairs(q3ContactManager* manager) {
     pairs.shrinkRetainingCapacity(0);
 
-    // Query the tree with all moving boxes
-    for (auto [val, idx] : moving_boxes.items.iter()) {
-        m_currentIndex = val;
-        q3AABB aabb = box_infos.items[m_currentIndex].aabb;
-        // @TODO: Use a static and non-static tree and query one against the other.
-        // This will potentially prevent (gotta think about this more)
-        // time wasted with queries of static bodies against static
-        // bodies, and kinematic to kinematic.
-        Query(this, aabb);
-    }
-
-    // Reset the move buffer
-    moving_boxes.shrinkRetainingCapacity(0);
-
-    // Sort pairs to expose duplicates
-    std::sort(
-        pairs.items.ptr, pairs.items.ptr + pairs.items.len,
-        [](const auto& lhs, const auto& rhs) -> bool {
-            if (lhs.A < rhs.A) return true;
-            if (lhs.A == rhs.A) return lhs.B < rhs.B;
-            return false;
-        }
-    );
-
-    // Queue manifolds for solving
-    i32 i = 0;
-    while (i < pairs.items.len) {
-        // Add contact to manager
-        q3ContactPair* pair = &pairs.items[i];
-        q3Box* A = box_infos.items[pair->A].box;
-        q3Box* B = box_infos.items[pair->B].box;
-        m_manager->AddContact(A, B);
-        ++i;
-
-        // Skip duplicate pairs by iterating i until we find a unique pair
-        while (i < pairs.items.len) {
-            q3ContactPair* potentialDup = &pairs.items[i];
-            if (pair->A != potentialDup->A || pair->B != potentialDup->B) break;
-            ++i;
+    for (auto [test_box, test_idx] : boxes.items.iter()) {
+        for (auto [box, box_idx] : boxes.items.iter()) {
+            if (q3AABBtoAABB(test_box.aabb, box.aabb)) {
+                if (box_idx == test_idx) continue; // Cannot collide with self
+                i32 iA = math::min(box_idx, test_idx);
+                i32 iB = math::max(box_idx, test_idx);
+                pairs.append({.A = iA, .B = iB}).unwrap();
+            }
         }
     }
 }
 
 void q3BroadPhase::Update(i32 id, const q3AABB& aabb) {
-    if (BoxListUpdate(id, aabb)) moving_boxes.append(id).unwrap();
+    if (!boxes.items[id].aabb.Contains(aabb)) { boxes.items[id].aabb = FatAABB(aabb); }
 }
 
-bool q3BroadPhase::TestOverlap(i32 A, i32 B) const {
-    return q3AABBtoAABB(box_infos.items[A].aabb, box_infos.items[B].aabb);
-}
-
-inline bool q3BroadPhase::TreeCallBack(i32 index) {
-    // Cannot collide with self
-    if (index == m_currentIndex) return true;
-
-    i32 iA = q3Min(index, m_currentIndex);
-    i32 iB = q3Max(index, m_currentIndex);
-    pairs.append({.A = iA, .B = iB}).unwrap();
-    return true;
+bool q3BroadPhase::TestOverlap(i32 A, i32 B) {
+    return q3AABBtoAABB(GetBoxInfo(A).aabb, GetBoxInfo(B).aabb);
 }

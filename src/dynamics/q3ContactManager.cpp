@@ -26,13 +26,14 @@ distribution.
 #include "../collision/q3Box.h"
 #include "../debug/q3Render.h"
 #include "../scene/q3Scene.h"
+#include "../math/q3Math.h"
 #include "q3Body.h"
 #include "q3Contact.h"
 #include "q3ContactManager.h"
 
 q3ContactManager::q3ContactManager(Allocator allocator) :
     contacts(LinkedList<q3ContactConstraint>::init(allocator)),
-    m_broadphase(allocator, this) {}
+    m_broadphase(allocator) {}
 
 void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
     q3Body* bodyA = A->body;
@@ -78,7 +79,14 @@ void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
 }
 
 void q3ContactManager::FindNewContacts() {
-    m_broadphase.UpdatePairs();
+    m_broadphase.UpdatePairs(this);
+    // queue manifolds for solving
+    for (auto pair : m_broadphase.pairs.items) {
+        AddContact(
+            m_broadphase.GetBoxInfo(pair.A).box,
+            m_broadphase.GetBoxInfo(pair.B).box
+        );
+    }
 }
 
 void q3ContactManager::RemoveContact(q3ContactConstraint* contact) {

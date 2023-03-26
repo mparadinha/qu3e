@@ -30,13 +30,8 @@ distribution.
 #include "../common/q3Settings.h"
 #include "../math/q3Math.h"
 
-inline r32 q3MixRestitution(const q3Box* A, const q3Box* B) {
-    return q3Max(A->restitution, B->restitution);
-}
-
-inline r32 q3MixFriction(const q3Box* A, const q3Box* B) {
-    return std::sqrt(A->friction * B->friction);
-}
+r32 q3MixRestitution(const q3Box* A, const q3Box* B);
+r32 q3MixFriction(const q3Box* A, const q3Box* B);
 
 union q3FeaturePair {
     struct {
