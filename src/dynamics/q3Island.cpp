@@ -36,7 +36,7 @@ void q3Island::Solve() {
     for (auto [body, i] : bodies.items.iter()) {
         q3VelocityState* v = &velocities.items[i];
 
-        if (body->HasFlag(q3Body::eDynamic)) {
+        if (body->flags.Dynamic) {
             body->ApplyLinearForce(gravity * body->m_gravityScale);
 
             // Calculate world space inertia tensor
@@ -78,7 +78,7 @@ void q3Island::Solve() {
     for (auto [body, i] : bodies.items.iter()) {
         q3VelocityState* v = &velocities.items[i];
 
-        if (body->HasFlag(q3Body::eStatic)) continue;
+        if (body->flags.Static) continue;
 
         body->m_linearVelocity = v->v;
         body->m_angularVelocity = v->w;
@@ -94,7 +94,7 @@ void q3Island::Solve() {
         // Find minimum sleep time of the entire island
         f32 minSleepTime = Q3_R32_MAX;
         for (auto body : bodies.items) {
-            if (body->m_flags & q3Body::eStatic) continue;
+            if (body->flags.Static) continue;
 
             const r32 sqrLinVel = q3Dot(body->m_linearVelocity, body->m_linearVelocity);
             const r32 cbAngVel = q3Dot(body->m_angularVelocity, body->m_angularVelocity);

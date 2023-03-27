@@ -86,17 +86,6 @@ struct ArrayList {
         return this->pop();
     }
 
-    T pop() {
-        auto val = this->items[this->items.len - 1];
-        this->items.len -= 1;
-        return val;
-    }
-
-    Opt<T> popOrNull() {
-        if (this->items.len == 0) return Null;
-        return this->pop();
-    }
-
     T swapRemove(usize i) {
         if (this->items.len - 1 == i) return this->pop();
 

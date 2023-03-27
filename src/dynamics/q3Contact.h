@@ -83,27 +83,36 @@ struct q3ContactEdge {
 };
 
 struct q3ContactConstraint {
-    void SolveCollision(void);
+    struct Flags {
+        bool Colliding;    // Set when contact collides during a step
+        bool WasColliding; // Set when two objects stop colliding
+        bool Island;       // For internal marking during island forming
+
+        Flags() : Colliding(false), WasColliding(false), Island(false) {}
+    };
 
     q3Box *A, *B;
     q3Body *bodyA, *bodyB;
-
     q3ContactEdge edgeA;
     q3ContactEdge edgeB;
-
     q3ContactConstraint* next;
     q3ContactConstraint* prev;
 
     r32 friction;
     r32 restitution;
-
     q3Manifold manifold;
 
-    enum {
-        eColliding = 0x00000001,    // Set when contact collides during a step
-        eWasColliding = 0x00000002, // Set when two objects stop colliding
-        eIsland = 0x00000004,       // For internal marking during island forming
-    };
+    Flags flags;
 
-    i32 m_flags;
+    void SolveCollision() {
+        manifold.contactCount = 0;
+        q3BoxtoBox(&manifold, A, B);
+        if (manifold.contactCount > 0) {
+            if (flags.Colliding) flags.WasColliding = true;
+            flags.Colliding = true;
+        } else {
+            flags.WasColliding = flags.Colliding;
+            flags.Colliding = false;
+        }
+    }
 };

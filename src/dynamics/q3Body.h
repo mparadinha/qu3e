@@ -92,17 +92,29 @@ struct q3BodyDef {
 };
 
 struct q3Body {
-    enum Flag {
-        eAwake = 0x001,
-        eActive = 0x002,
-        eAllowSleep = 0x004,
-        eIsland = 0x010,
-        eStatic = 0x020,
-        eDynamic = 0x040,
-        eKinematic = 0x080,
-        eLockAxisX = 0x100,
-        eLockAxisY = 0x200,
-        eLockAxisZ = 0x400,
+    struct Flags {
+        bool Awake;
+        bool Active;
+        bool AllowSleep;
+        bool Island;
+        bool Static;
+        bool Dynamic;
+        bool Kinematic;
+        bool LockAxisX;
+        bool LockAxisY;
+        bool LockAxisZ;
+
+        Flags() :
+            Awake(false),
+            Active(false),
+            AllowSleep(false),
+            Island(false),
+            Static(false),
+            Dynamic(false),
+            Kinematic(false),
+            LockAxisX(false),
+            LockAxisY(false),
+            LockAxisZ(false) {}
     };
 
     q3Mat3 m_invInertiaModel;
@@ -120,7 +132,7 @@ struct q3Body {
     r32 m_sleepTime;
     r32 m_gravityScale;
     i32 m_layers;
-    i32 m_flags;
+    Flags flags;
 
     q3Box* m_boxes;
     void* m_userData;
@@ -188,10 +200,4 @@ struct q3Body {
     // can be updated.
     void SetTransform(const q3Vec3& position);
     void SetTransform(const q3Vec3& position, const q3Vec3& axis, r32 angle);
-
-    void SetFlag(Flag flag) { this->m_flags |= flag; }
-
-    void UnsetFlag(Flag flag) { this->m_flags &= ~flag; }
-
-    bool HasFlag(Flag flag) const { return this->m_flags & flag; }
 };

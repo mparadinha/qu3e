@@ -60,7 +60,7 @@ void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
     contact->bodyB = B->body;
     contact->friction = q3MixFriction(A, B);
     contact->restitution = q3MixRestitution(A, B);
-    contact->m_flags = 0;
+    contact->flags = {};
     contact->manifold.SetPair(A, B);
     contact->manifold.contactCount = 0;
     for (i32 i = 0; i < 8; ++i) contact->manifold.contacts[i].warmStarted = 0;
@@ -82,10 +82,7 @@ void q3ContactManager::FindNewContacts() {
     m_broadphase.UpdatePairs(this);
     // queue manifolds for solving
     for (auto pair : m_broadphase.pairs.items) {
-        AddContact(
-            m_broadphase.GetBoxInfo(pair.A).box,
-            m_broadphase.GetBoxInfo(pair.B).box
-        );
+        AddContact(m_broadphase.GetBoxInfo(pair.A).box, m_broadphase.GetBoxInfo(pair.B).box);
     }
 }
 
@@ -133,9 +130,9 @@ void q3ContactManager::TestCollisions(void) {
         q3Body* bodyA = A->body;
         q3Body* bodyB = B->body;
 
-        constraint->m_flags &= ~q3ContactConstraint::eIsland;
+        constraint->flags.Island = false;
 
-        if (!bodyA->HasFlag(q3Body::eAwake) && !bodyB->HasFlag(q3Body::eAwake)) {
+        if (!bodyA->flags.Awake && !bodyB->flags.Awake) {
             opt_node = opt_next;
             continue;
         }

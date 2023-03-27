@@ -48,18 +48,20 @@ q3Scene::~q3Scene() {
     RemoveAllBodies();
 }
 
-void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 stackSize) {
-    seed->SetFlag(q3Body::eIsland); // Mark seed as apart of island
+void q3Scene::BuildIsland(q3Island* island, q3Body* seed) {
+    seed->flags.Island = true; // Mark seed as apart of island
 
-    i32 stackCount = 0;
-    stack[stackCount++] = seed;
+    auto stack = ArrayList<q3Body*>::init(allocator);
+    defer(stack.deinit());
+    stack.append(seed).unwrap();
+
     island->bodies.shrinkRetainingCapacity(0);
     island->contacts.shrinkRetainingCapacity(0);
 
     // Perform DFS on constraint graph
-    while (stackCount > 0) {
+    while (stack.items.len > 0) {
         // Decrement stack to implement iterative backtracking
-        q3Body* body = stack[--stackCount];
+        q3Body* body = stack.pop();
         island->Add(body);
 
         // Awaken all bodies connected to the island
@@ -69,7 +71,7 @@ void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 st
         // formations as small as possible, however the static
         // body itself should be apart of the island in order
         // to properly represent a full contact
-        if (body->HasFlag(q3Body::eStatic)) continue;
+        if (body->flags.Static) continue;
 
         // Search all contacts connected to this body
         q3ContactEdge* contacts = body->contact_edge_list;
@@ -77,26 +79,24 @@ void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 st
             q3ContactConstraint* contact = edge->constraint;
 
             // Skip contacts that have been added to an island already
-            if (contact->m_flags & q3ContactConstraint::eIsland) continue;
+            if (contact->flags.Island) continue;
             // Can safely skip this contact if it didn't actually collide
             // with anything
-            if (!(contact->m_flags & q3ContactConstraint::eColliding)) continue;
+            if (!(contact->flags.Colliding)) continue;
             // Skip sensors
             if (contact->A->sensor || contact->B->sensor) continue;
 
             // Mark island flag and add to island
-            contact->m_flags |= q3ContactConstraint::eIsland;
+            contact->flags.Island = true;
             island->Add(contact);
 
             // Attempt to add the other body in the contact to the island
             // to simulate contact awakening propogation
             q3Body* other = edge->other;
-            if (other->HasFlag(q3Body::eIsland)) continue;
+            if (other->flags.Island) continue;
 
-            debug::assert(stackCount < stackSize);
-
-            stack[stackCount++] = other;
-            other->m_flags |= q3Body::eIsland;
+            stack.append(other).unwrap();
+            other->flags.Island = true;
         }
     }
 }
@@ -104,7 +104,7 @@ void q3Scene::BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 st
 void q3Scene::Step() {
     contact_manager.TestCollisions();
 
-    for (q3Body* body : bodies.ptrIter()) body->m_flags &= ~q3Body::eIsland;
+    for (q3Body* body : bodies.ptrIter()) body->flags.Island = false;
 
     q3Island island =
         q3Island::init(allocator, dt, gravity, iterations, allow_sleep, enable_friction);
@@ -115,16 +115,13 @@ void q3Scene::Step() {
     island.contact_states.ensureTotalCapacity(contact_manager.contacts.len).unwrap();
 
     // Build each active island and then solve each built island
-    i32 stackSize = bodies.len;
-    auto stack_slice = allocator.alloc<q3Body*>(stackSize).unwrap();
-    defer(allocator.free(stack_slice));
     for (q3Body* seed : bodies.ptrIter()) {
-        if (seed->HasFlag(q3Body::eIsland)) continue; // Seed can't be part of an island already
-        if (!seed->HasFlag(q3Body::eAwake)) continue; // Seed must be awake
+        if (seed->flags.Island) continue; // Seed can't be part of an island already
+        if (!seed->flags.Awake) continue; // Seed must be awake
         // Seed cannot be a static body in order to keep islands as small as possible
-        if (seed->HasFlag(q3Body::eStatic)) continue;
+        if (seed->flags.Static) continue;
 
-        BuildIsland(&island, seed, stack_slice.ptr, stackSize);
+        BuildIsland(&island, seed);
         debug::assert(island.bodies.items.len != 0);
 
         island.Initialize();
@@ -133,13 +130,13 @@ void q3Scene::Step() {
         // Reset all static island flags
         // This allows static bodies to participate in other island formations
         for (auto body : island.bodies.items) {
-            if (body->HasFlag(q3Body::eStatic)) body->UnsetFlag(q3Body::eIsland);
+            if (body->flags.Static) body->flags.Island = false;
         }
     }
 
     // Update the broadphase AABBs
     for (q3Body* body : bodies.ptrIter()) {
-        if (body->m_flags & q3Body::eStatic) continue;
+        if (body->flags.Static) continue;
         body->SynchronizeProxies();
     }
 
@@ -263,7 +260,6 @@ void q3Scene::Render(q3Render* render) {
     };
     // clang-format on
     for (q3Body* body : bodies.ptrIter()) {
-        bool awake = body->HasFlag(q3Body::eAwake);
         for (q3Box* box = body->m_boxes; box; box = box->next) {
             q3Transform world = q3Mul(body->m_tx, box->local);
             const auto e = box->e;
@@ -283,7 +279,7 @@ void q3Scene::Render(q3Render* render) {
     }
 
     for (auto contact : contact_manager.contacts.iter()) {
-        if (!(contact.m_flags & q3ContactConstraint::eColliding)) continue;
+        if (!contact.flags.Colliding) continue;
         q3Manifold m = contact.manifold;
         for (i32 j = 0; j < m.contactCount; ++j) {
             q3Contact c = m.contacts[j];
@@ -294,8 +290,7 @@ void q3Scene::Render(q3Render* render) {
             render->SetPenPosition(c.position.x, c.position.y, c.position.z);
             render->Point();
 
-            auto color =
-                m.A->body->HasFlag(q3Body::eAwake) ? q3Vec3(1, 1, 1) : q3Vec3(0.2, 0.2, 0.2);
+            auto color = m.A->body->flags.Awake ? q3Vec3(1, 1, 1) : q3Vec3(0.2, 0.2, 0.2);
             render->SetPenColor(color.x, color.y, color.z);
 
             render->SetPenPosition(c.position.x, c.position.y, c.position.z);

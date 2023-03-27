@@ -61,9 +61,8 @@ struct q3Scene {
     // Run the simulation forward in time by dt (fixed timestep). Variable
     // timestep is not supported.
     void Step();
-
     // helper for `q3Scene::Step`
-    void BuildIsland(q3Island* island, q3Body* seed, q3Body** stack, i32 stackSize);
+    void BuildIsland(q3Island* island, q3Body* seed);
 
     // Construct a new rigid body. The BodyDef can be reused at the user's
     // discretion, as no reference to the BodyDef is kept.
