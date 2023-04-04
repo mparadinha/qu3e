@@ -117,18 +117,6 @@ const q3Vec3& q3Mat3::operator[](u32 index) const {
     }
 }
 
-const q3Vec3 q3Mat3::Column0() const {
-    return q3Vec3(ex.x, ey.x, ez.x);
-}
-
-const q3Vec3 q3Mat3::Column1() const {
-    return q3Vec3(ex.y, ey.y, ez.y);
-}
-
-const q3Vec3 q3Mat3::Column2() const {
-    return q3Vec3(ex.z, ey.z, ez.z);
-}
-
 const q3Vec3 q3Mat3::operator*(const q3Vec3& rhs) const {
     return q3Vec3(
         ex.x * rhs.x + ey.x * rhs.y + ez.x * rhs.z, ex.y * rhs.x + ey.y * rhs.y + ez.y * rhs.z,

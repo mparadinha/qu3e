@@ -56,12 +56,18 @@ inline r32 q3Abs(r32 a) {
 }
 
 namespace math {
-template <typename T>
-T min(T a, T b) { return (a < b) ? a : b; }
 
 template <typename T>
-T max(T a, T b) { return (a > b) ? a : b; }
-};
+T min(T a, T b) {
+    return (a < b) ? a : b;
+}
+
+template <typename T>
+T max(T a, T b) {
+    return (a > b) ? a : b;
+}
+
+}; // namespace math
 
 inline i32 q3Min(i32 a, i32 b) {
     if (a < b) return a;

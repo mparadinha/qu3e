@@ -31,9 +31,15 @@ distribution.
 #include "q3Vec3.h"
 
 struct q3Mat3 {
-    q3Vec3 ex;
-    q3Vec3 ey;
-    q3Vec3 ez;
+    union {
+        struct {
+            q3Vec3 ex;
+            q3Vec3 ey;
+            q3Vec3 ez;
+        };
+
+        f32 cels[9];
+    };
 
     q3Mat3();
     q3Mat3(r32 a, r32 b, r32 c, r32 d, r32 e, r32 f, r32 g, r32 h, r32 i);
@@ -51,9 +57,13 @@ struct q3Mat3 {
 
     q3Vec3& operator[](u32 index);
     const q3Vec3& operator[](u32 index) const;
-    const q3Vec3 Column0() const;
-    const q3Vec3 Column1() const;
-    const q3Vec3 Column2() const;
+
+    q3Vec3 col(u32 i) {
+        if (i == 0) return q3Vec3(ex.x, ey.x, ez.x);
+        if (i == 1) return q3Vec3(ex.y, ey.y, ez.y);
+        if (i == 2) return q3Vec3(ex.z, ey.z, ez.z);
+        unreachable();
+    }
 
     const q3Vec3 operator*(const q3Vec3& rhs) const;
     const q3Mat3 operator*(const q3Mat3& rhs) const;
