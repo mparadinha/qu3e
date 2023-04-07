@@ -285,9 +285,9 @@ void q3Body::CalculateMassData() {
         inertia -= (identity * q3Dot(lc, lc) - q3OuterProduct(lc, lc)) * mass;
         m_invInertiaModel = q3Inverse(inertia);
 
-        if (flags.LockAxisX) q3Identity(m_invInertiaModel.ex);
-        if (flags.LockAxisY) q3Identity(m_invInertiaModel.ey);
-        if (flags.LockAxisZ) q3Identity(m_invInertiaModel.ez);
+        if (flags.LockAxisX) q3Identity(m_invInertiaModel.e.x);
+        if (flags.LockAxisY) q3Identity(m_invInertiaModel.e.y);
+        if (flags.LockAxisZ) q3Identity(m_invInertiaModel.e.z);
     } else {
         // Force all dynamic bodies to have some mass
         m_invMass = r32(1.0);

@@ -27,17 +27,22 @@ distribution.
 
 q3Mat3::q3Mat3() {}
 
-q3Mat3::q3Mat3(r32 a, r32 b, r32 c, r32 d, r32 e, r32 f, r32 g, r32 h, r32 i) :
-    ex(a, b, c),
-    ey(d, e, f),
-    ez(g, h, i) {}
+q3Mat3::q3Mat3(r32 a, r32 b, r32 c, r32 d, r32 e, r32 f, r32 g, r32 h, r32 i) {
+    this->e.x = q3Vec3(a, b, c);
+    this->e.y = q3Vec3(d, e, f);
+    this->e.z = q3Vec3(g, h, i);
+}
 
-q3Mat3::q3Mat3(const q3Vec3& _x, const q3Vec3& _y, const q3Vec3& _z) : ex(_x), ey(_y), ez(_z) {}
+q3Mat3::q3Mat3(const q3Vec3& _x, const q3Vec3& _y, const q3Vec3& _z) {
+    e.x = _x;
+    e.y = _y;
+    e.z = _z;
+}
 
 void q3Mat3::Set(r32 a, r32 b, r32 c, r32 d, r32 e, r32 f, r32 g, r32 h, r32 i) {
-    ex.Set(a, b, c);
-    ey.Set(d, e, f);
-    ez.Set(g, h, i);
+    this->e.x.Set(a, b, c);
+    this->e.y.Set(d, e, f);
+    this->e.z.Set(g, h, i);
 }
 
 void q3Mat3::Set(const q3Vec3& axis, r32 angle) {
@@ -56,15 +61,15 @@ void q3Mat3::Set(const q3Vec3& axis, r32 angle) {
 }
 
 void q3Mat3::SetRows(const q3Vec3& x, const q3Vec3& y, const q3Vec3& z) {
-    ex = x;
-    ey = y;
-    ez = z;
+    e.x = x;
+    e.y = y;
+    e.z = z;
 }
 
 q3Mat3& q3Mat3::operator=(const q3Mat3& rhs) {
-    ex = rhs.ex;
-    ey = rhs.ey;
-    ez = rhs.ez;
+    e.x = rhs.e.x;
+    e.y = rhs.e.y;
+    e.z = rhs.e.z;
 
     return *this;
 }
@@ -76,66 +81,67 @@ q3Mat3& q3Mat3::operator*=(const q3Mat3& rhs) {
 }
 
 q3Mat3& q3Mat3::operator*=(r32 f) {
-    ex *= f;
-    ey *= f;
-    ez *= f;
+    e.x *= f;
+    e.y *= f;
+    e.z *= f;
 
     return *this;
 }
 
 q3Mat3& q3Mat3::operator+=(const q3Mat3& rhs) {
-    ex += rhs.ex;
-    ey += rhs.ey;
-    ez += rhs.ez;
+    e.x += rhs.e.x;
+    e.y += rhs.e.y;
+    e.z += rhs.e.z;
 
     return *this;
 }
 
 q3Mat3& q3Mat3::operator-=(const q3Mat3& rhs) {
-    ex -= rhs.ex;
-    ey -= rhs.ey;
-    ez -= rhs.ez;
+    e.x -= rhs.e.x;
+    e.y -= rhs.e.y;
+    e.z -= rhs.e.z;
 
     return *this;
 }
 
 q3Vec3& q3Mat3::operator[](u32 index) {
     switch (index) {
-        case 0: return ex;
-        case 1: return ey;
-        case 2: return ez;
-        default: debug::assert(false); return ex;
+        case 0: return e.x;
+        case 1: return e.y;
+        case 2: return e.z;
+        default: debug::assert(false); return e.x;
     }
 }
 
 const q3Vec3& q3Mat3::operator[](u32 index) const {
     switch (index) {
-        case 0: return ex;
-        case 1: return ey;
-        case 2: return ez;
-        default: debug::assert(false); return ex;
+        case 0: return e.x;
+        case 1: return e.y;
+        case 2: return e.z;
+        default: debug::assert(false); return e.x;
     }
 }
 
 const q3Vec3 q3Mat3::operator*(const q3Vec3& rhs) const {
     return q3Vec3(
-        ex.x * rhs.x + ey.x * rhs.y + ez.x * rhs.z, ex.y * rhs.x + ey.y * rhs.y + ez.y * rhs.z,
-        ex.z * rhs.x + ey.z * rhs.y + ez.z * rhs.z
+        e.x.x * rhs.x + e.y.x * rhs.y + e.z.x * rhs.z,
+        e.x.y * rhs.x + e.y.y * rhs.y + e.z.y * rhs.z,
+        e.x.z * rhs.x + e.y.z * rhs.y + e.z.z * rhs.z
     );
 }
 
 const q3Mat3 q3Mat3::operator*(const q3Mat3& rhs) const {
-    return q3Mat3((*this * rhs.ex), (*this * rhs.ey), (*this * rhs.ez));
+    return q3Mat3((*this * rhs.e.x), (*this * rhs.e.y), (*this * rhs.e.z));
 }
 
 const q3Mat3 q3Mat3::operator*(r32 f) const {
-    return q3Mat3(ex * f, ey * f, ez * f);
+    return q3Mat3(e.x * f, e.y * f, e.z * f);
 }
 
 const q3Mat3 q3Mat3::operator+(const q3Mat3& rhs) const {
-    return q3Mat3(ex + rhs.ex, ey + rhs.ey, ez + rhs.ez);
+    return q3Mat3(e.x + rhs.e.x, e.y + rhs.e.y, e.z + rhs.e.z);
 }
 
 const q3Mat3 q3Mat3::operator-(const q3Mat3& rhs) const {
-    return q3Mat3(ex - rhs.ex, ey - rhs.ey, ez - rhs.ez);
+    return q3Mat3(e.x - rhs.e.x, e.y - rhs.e.y, e.z - rhs.e.z);
 }

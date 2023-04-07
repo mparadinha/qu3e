@@ -33,10 +33,10 @@ distribution.
 struct q3Mat3 {
     union {
         struct {
-            q3Vec3 ex;
-            q3Vec3 ey;
-            q3Vec3 ez;
-        };
+            q3Vec3 x;
+            q3Vec3 y;
+            q3Vec3 z;
+        } e;
 
         f32 cels[9];
     };
@@ -59,9 +59,9 @@ struct q3Mat3 {
     const q3Vec3& operator[](u32 index) const;
 
     q3Vec3 col(u32 i) {
-        if (i == 0) return q3Vec3(ex.x, ey.x, ez.x);
-        if (i == 1) return q3Vec3(ex.y, ey.y, ez.y);
-        if (i == 2) return q3Vec3(ex.z, ey.z, ez.z);
+        if (i == 0) return q3Vec3(e.x.x, e.y.x, e.z.x);
+        if (i == 1) return q3Vec3(e.x.y, e.y.y, e.z.y);
+        if (i == 2) return q3Vec3(e.x.z, e.y.z, e.z.z);
         unreachable();
     }
 
@@ -81,7 +81,11 @@ inline const q3Mat3 q3Rotate(const q3Vec3& x, const q3Vec3& y, const q3Vec3& z) 
 }
 
 inline const q3Mat3 q3Transpose(const q3Mat3& m) {
-    return q3Mat3(m.ex.x, m.ey.x, m.ez.x, m.ex.y, m.ey.y, m.ez.y, m.ex.z, m.ey.z, m.ez.z);
+    return q3Mat3(
+        m.e.x.x, m.e.y.x, m.e.z.x,
+        m.e.x.y, m.e.y.y, m.e.z.y,
+        m.e.x.z, m.e.y.z, m.e.z.z
+    );
 }
 
 inline void q3Zero(q3Mat3& m) {
@@ -144,11 +148,11 @@ inline const q3Mat3 q3Inverse(const q3Mat3& m) {
     q3Vec3 tmp0, tmp1, tmp2;
     r32 detinv;
 
-    tmp0 = q3Cross(m.ey, m.ez);
-    tmp1 = q3Cross(m.ez, m.ex);
-    tmp2 = q3Cross(m.ex, m.ey);
+    tmp0 = q3Cross(m.e.y, m.e.z);
+    tmp1 = q3Cross(m.e.z, m.e.x);
+    tmp2 = q3Cross(m.e.x, m.e.y);
 
-    detinv = r32(1.0) / q3Dot(m.ez, tmp2);
+    detinv = r32(1.0) / q3Dot(m.e.z, tmp2);
 
     return q3Mat3(
         tmp0.x * detinv, tmp1.x * detinv, tmp2.x * detinv, tmp0.y * detinv, tmp1.y * detinv,
