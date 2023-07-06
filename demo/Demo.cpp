@@ -43,7 +43,6 @@ q3Scene scene(dt);
 Clock g_clock;
 bool paused = false;
 bool singleStep = false;
-bool enableSleep = true;
 bool enableFriction = true;
 int velocityIterations = 10;
 i32 mouseX;
@@ -339,7 +338,6 @@ void DisplayLoop(void) {
     ImGui::Combo("Demo", &currentDemo, "Drop Boxes\0Ray Push\0Box Stack\0Test\0");
     ImGui::Checkbox("Pause", &paused);
     if (paused) ImGui::Checkbox("Single Step", &singleStep);
-    ImGui::Checkbox("Sleeping", &enableSleep);
     ImGui::Checkbox("Friction", &enableFriction);
     ImGui::SliderInt("Iterations", &velocityIterations, 1, 50);
     ImGui::End();
@@ -364,7 +362,6 @@ void MainLoop(void) {
 
     f32 time = g_clock.Start();
 
-    scene.SetAllowSleep(enableSleep);
     scene.enable_friction = enableFriction;
     scene.iterations = intCast<usize>(velocityIterations);
 

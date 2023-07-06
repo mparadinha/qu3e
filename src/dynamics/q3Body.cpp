@@ -37,7 +37,6 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
     m_q.Set(q3Normalize(def.axis), def.angle);
     m_tx.rotation = m_q.ToMat3();
     m_tx.position = def.position;
-    m_sleepTime = r32(0.0);
     m_gravityScale = def.gravityScale;
     m_layers = def.layers;
     m_userData = def.userData;
@@ -60,8 +59,6 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
         }
     }
 
-    if (def.allowSleep) flags.AllowSleep = true;
-    if (def.awake) flags.Awake = true;
     if (def.active) flags.Active = true;
     if (def.lockAxisX) flags.LockAxisX = true;
     if (def.lockAxisY) flags.LockAxisY = true;
@@ -152,42 +149,24 @@ void q3Body::RemoveAllBoxes() {
 
 void q3Body::ApplyLinearForce(const q3Vec3& force) {
     m_force += force * m_mass;
-    SetToAwake();
 }
 
 void q3Body::ApplyForceAtWorldPoint(const q3Vec3& force, const q3Vec3& point) {
     m_force += force * m_mass;
     m_torque += q3Cross(point - m_worldCenter, force);
-    SetToAwake();
 }
 
 void q3Body::ApplyLinearImpulse(const q3Vec3& impulse) {
     m_linearVelocity += impulse * m_invMass;
-    SetToAwake();
 }
 
 void q3Body::ApplyLinearImpulseAtWorldPoint(const q3Vec3& impulse, const q3Vec3& point) {
     m_linearVelocity += impulse * m_invMass;
     m_angularVelocity += m_invInertiaWorld * q3Cross(point - m_worldCenter, impulse);
-    SetToAwake();
 }
 
 void q3Body::ApplyTorque(const q3Vec3& torque) {
     m_torque += torque;
-}
-
-void q3Body::SetToAwake() {
-    if (!flags.Awake) { m_sleepTime = r32(0.0); }
-    flags.Awake = true;
-}
-
-void q3Body::SetToSleep() {
-    flags.Awake = false;
-    m_sleepTime = r32(0.0);
-    q3Identity(m_linearVelocity);
-    q3Identity(m_angularVelocity);
-    q3Identity(m_force);
-    q3Identity(m_torque);
 }
 
 const q3Vec3 q3Body::GetLocalPoint(const q3Vec3& p) const {
@@ -215,14 +194,12 @@ const q3Vec3 q3Body::GetVelocityAtWorldPoint(const q3Vec3& p) const {
 void q3Body::SetLinearVelocity(const q3Vec3& v) {
     // Velocity of static bodies cannot be adjusted
     debug::assert(!flags.Static);
-    if (q3Dot(v, v) > r32(0.0)) { SetToAwake(); }
     m_linearVelocity = v;
 }
 
 void q3Body::SetAngularVelocity(const q3Vec3 v) {
     // Velocity of static bodies cannot be adjusted
     debug::assert(!flags.Static);
-    if (q3Dot(v, v) > r32(0.0)) { SetToAwake(); }
     m_angularVelocity = v;
 }
 

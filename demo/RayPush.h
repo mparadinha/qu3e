@@ -103,7 +103,6 @@ struct RayPush : public Demo {
         scene.RayCast(&rayCast, rayCast.data);
 
         if (rayCast.impactBody) {
-            rayCast.impactBody->SetToAwake();
             rayCast.impactBody->ApplyForceAtWorldPoint(
                 rayCast.data.dir * 20.0f, rayCast.data.GetImpactPoint()
             );

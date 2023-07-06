@@ -50,8 +50,6 @@ struct q3BodyDef {
         bodyType = eStaticBody;
         layers = 0x000000001;
         userData = NULL;
-        allowSleep = true;
-        awake = true;
         active = true;
         lockAxisX = false;
         lockAxisY = false;
@@ -82,9 +80,6 @@ struct q3BodyDef {
     // not resolve any collisions.
     q3BodyType bodyType;
 
-    bool allowSleep; // Sleeping lets a body assume a non-moving state. Greatly
-                     // reduces CPU usage.
-    bool awake;      // Initial sleep state. True means awake.
     bool active;     // A body can start out inactive and just sits in memory.
     bool lockAxisX;  // Locked rotation on the x axis.
     bool lockAxisY;  // Locked rotation on the y axis.
@@ -93,9 +88,7 @@ struct q3BodyDef {
 
 struct q3Body {
     struct Flags {
-        bool Awake;
         bool Active;
-        bool AllowSleep;
         bool Island;
         bool Static;
         bool Dynamic;
@@ -105,9 +98,7 @@ struct q3Body {
         bool LockAxisZ;
 
         Flags() :
-            Awake(false),
             Active(false),
-            AllowSleep(false),
             Island(false),
             Static(false),
             Dynamic(false),
@@ -129,7 +120,6 @@ struct q3Body {
     q3Quaternion m_q;
     q3Vec3 m_localCenter;
     q3Vec3 m_worldCenter;
-    r32 m_sleepTime;
     r32 m_gravityScale;
     i32 m_layers;
     Flags flags;
@@ -183,8 +173,6 @@ struct q3Body {
     void ApplyLinearImpulse(const q3Vec3& impulse);
     void ApplyLinearImpulseAtWorldPoint(const q3Vec3& impulse, const q3Vec3& point);
     void ApplyTorque(const q3Vec3& torque);
-    void SetToAwake();
-    void SetToSleep();
     const q3Vec3 GetLocalPoint(const q3Vec3& p) const;
     const q3Vec3 GetLocalVector(const q3Vec3& v) const;
     const q3Vec3 GetWorldPoint(const q3Vec3& p) const;

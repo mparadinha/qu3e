@@ -42,7 +42,6 @@ struct q3Scene {
     r32 dt;
     q3Vec3 gravity;
     bool new_box;
-    bool allow_sleep;
     // Friction occurs when two rigid bodies have shapes that slide along one
     // another. The friction force resists this sliding motion.
     bool enable_friction;
@@ -71,12 +70,6 @@ struct q3Scene {
     void RemoveBody(q3Body* body);
 
     void RemoveAllBodies();
-
-    // Enables or disables rigid body sleeping. Sleeping is an effective CPU
-    // optimization where bodies are put to sleep if they don't move much.
-    // Sleeping bodies sit in memory without being updated, until the are
-    // touched by something that wakes them up. The default is enabled.
-    void SetAllowSleep(bool allowSleep);
 
     // Query the world to find any shapes that can potentially intersect
     // the provided AABB. This works by querying the broadphase with an

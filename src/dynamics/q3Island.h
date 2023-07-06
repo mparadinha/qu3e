@@ -45,12 +45,10 @@ struct q3Island {
     f32 dt;
     q3Vec3 gravity;
     usize iterations;
-    bool allow_sleep;
     bool enable_friction;
 
     static q3Island init(
-        Allocator allocator, f32 dt, q3Vec3 gravity, usize iterations, bool allow_sleep,
-        bool enable_friction
+        Allocator allocator, f32 dt, q3Vec3 gravity, usize iterations, bool enable_friction
     ) {
         return q3Island{
             .bodies = ArrayList<q3Body*>::init(allocator),
@@ -60,7 +58,6 @@ struct q3Island {
             .dt = dt,
             .gravity = gravity,
             .iterations = iterations,
-            .allow_sleep = allow_sleep,
             .enable_friction = enable_friction,
         };
     }

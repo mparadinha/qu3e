@@ -73,9 +73,6 @@ void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
     contact->edgeB.constraint = contact;
     contact->edgeB.other = bodyA;
     bodyB->linkEdgeIntoList(&contact->edgeB);
-
-    bodyA->SetToAwake();
-    bodyB->SetToAwake();
 }
 
 void q3ContactManager::FindNewContacts() {
@@ -92,9 +89,6 @@ void q3ContactManager::RemoveContact(q3ContactConstraint* contact) {
 
     A->unlinkEdgeFromList(&contact->edgeA);
     B->unlinkEdgeFromList(&contact->edgeB);
-
-    A->SetToAwake();
-    B->SetToAwake();
 
     contacts.remove(contact);
 }
@@ -131,11 +125,6 @@ void q3ContactManager::TestCollisions(void) {
         q3Body* bodyB = B->body;
 
         constraint->flags.Island = false;
-
-        if (!bodyA->flags.Awake && !bodyB->flags.Awake) {
-            opt_node = opt_next;
-            continue;
-        }
 
         if (!bodyA->CanCollide(bodyB)) {
             RemoveContact(constraint);

@@ -3,7 +3,6 @@
 #include <cxxabi.h>
 #include <elfutils/libdwfl.h>
 #include <execinfo.h>
-#include <stacktrace>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

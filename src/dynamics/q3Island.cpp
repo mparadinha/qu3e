@@ -89,37 +89,6 @@ void q3Island::Solve() {
         body->m_q = q3Normalize(body->m_q);
         body->m_tx.rotation = body->m_q.ToMat3();
     }
-
-    if (allow_sleep) {
-        // Find minimum sleep time of the entire island
-        f32 minSleepTime = Q3_R32_MAX;
-        for (auto body : bodies.items) {
-            if (body->flags.Static) continue;
-
-            const r32 sqrLinVel = q3Dot(body->m_linearVelocity, body->m_linearVelocity);
-            const r32 cbAngVel = q3Dot(body->m_angularVelocity, body->m_angularVelocity);
-            const r32 linTol = Q3_SLEEP_LINEAR;
-            const r32 angTol = Q3_SLEEP_ANGULAR;
-
-            if (sqrLinVel > linTol || cbAngVel > angTol) {
-                minSleepTime = r32(0.0);
-                body->m_sleepTime = r32(0.0);
-            }
-
-            else {
-                body->m_sleepTime += dt;
-                minSleepTime = q3Min(minSleepTime, body->m_sleepTime);
-            }
-        }
-
-        // Put entire island to sleep so long as the minimum found sleep time
-        // is below the threshold. If the minimum sleep time reaches below the
-        // sleeping threshold, the entire island will be reformed next step
-        // and sleep test will be tried again.
-        if (minSleepTime > Q3_SLEEP_TIME) {
-            for (auto body : bodies.items) body->SetToSleep();
-        }
-    }
 }
 
 void q3Island::Add(q3Body* body) {

@@ -29,7 +29,6 @@ distribution.
 #include "../collision/q3Box.h"
 #include "../dynamics/q3Body.h"
 #include "../dynamics/q3Contact.h"
-#include "../dynamics/q3ContactSolver.h"
 #include "../dynamics/q3Island.h"
 #include "../debug/q3Render.h"
 
@@ -40,7 +39,6 @@ q3Scene::q3Scene(r32 dt, const q3Vec3& gravity, usize iterations) :
     gravity(gravity),
     dt(dt),
     new_box(false),
-    allow_sleep(true),
     enable_friction(true),
     iterations(iterations) {}
 
@@ -63,9 +61,6 @@ void q3Scene::BuildIsland(q3Island* island, q3Body* seed) {
         // Decrement stack to implement iterative backtracking
         q3Body* body = stack.pop();
         island->Add(body);
-
-        // Awaken all bodies connected to the island
-        body->SetToAwake();
 
         // Do not search across static bodies to keep island
         // formations as small as possible, however the static
@@ -107,7 +102,7 @@ void q3Scene::Step() {
     for (q3Body* body : bodies.ptrIter()) body->flags.Island = false;
 
     q3Island island =
-        q3Island::init(allocator, dt, gravity, iterations, allow_sleep, enable_friction);
+        q3Island::init(allocator, dt, gravity, iterations, enable_friction);
     defer(island.deinit());
     island.bodies.ensureTotalCapacity(bodies.len).unwrap();
     island.velocities.ensureTotalCapacity(bodies.len).unwrap();
@@ -117,7 +112,6 @@ void q3Scene::Step() {
     // Build each active island and then solve each built island
     for (q3Body* seed : bodies.ptrIter()) {
         if (seed->flags.Island) continue; // Seed can't be part of an island already
-        if (!seed->flags.Awake) continue; // Seed must be awake
         // Seed cannot be a static body in order to keep islands as small as possible
         if (seed->flags.Static) continue;
 
@@ -170,13 +164,6 @@ void q3Scene::RemoveAllBodies() {
         body->RemoveAllBoxes();
         bodies.remove(body);
         opt_node = opt_next;
-    }
-}
-
-void q3Scene::SetAllowSleep(bool allowSleep) {
-    allow_sleep = allowSleep;
-    if (!allowSleep) {
-        for (q3Body* body : bodies.ptrIter()) body->SetToAwake();
     }
 }
 
@@ -290,9 +277,7 @@ void q3Scene::Render(q3Render* render) {
             render->SetPenPosition(c.position.x, c.position.y, c.position.z);
             render->Point();
 
-            auto color = m.A->body->flags.Awake ? q3Vec3(1, 1, 1) : q3Vec3(0.2, 0.2, 0.2);
-            render->SetPenColor(color.x, color.y, color.z);
-
+            render->SetPenColor(1, 1, 1);
             render->SetPenPosition(c.position.x, c.position.y, c.position.z);
             render->Line(
                 c.position.x + m.normal.x * 0.5f, c.position.y + m.normal.y * 0.5f,
