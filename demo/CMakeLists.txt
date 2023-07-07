@@ -1,17 +1,12 @@
 add_definitions(-DFREEGLUT_EXPORTS -DFREEGLUT_STATIC -D_CRT_SECURE_NO_WARNINGS)
 
 set(demo_srcs
-	Clock.cpp
-	Demo.cpp
-	main.cpp
+	demo.cpp
+	gl.c
 )
 
 set(demo_hdrs
-	Demo.h
-	DropBoxes.h
-	RayPush.h
-	BoxStack.h
-	Clock.h
+	gl.h
 )
 
 source_group(Include FILES ${demo_srcs} ${demo_hdrs})
@@ -19,6 +14,7 @@ source_group(Include FILES ${demo_srcs} ${demo_hdrs})
 include_directories (
 	${OPENGL_INCLUDE_DIR}
 	${qu3e_SOURCE_DIR}
+	../imgui
 )
 
 if(APPLE)
@@ -46,4 +42,5 @@ target_link_libraries(
 	-lunwind
 	-ldw
 	-rdynamic
+	-lglfw
 )
