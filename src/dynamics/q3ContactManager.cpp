@@ -105,12 +105,7 @@ void q3ContactManager::RemoveContactsFromBody(q3Body* body) {
 }
 
 void q3ContactManager::RemoveFromBroadphase(q3Body* body) {
-    q3Box* box = body->m_boxes;
-
-    while (box) {
-        m_broadphase.RemoveBox(box);
-        box = box->next;
-    }
+    m_broadphase.RemoveBox(&body->box);
 }
 
 void q3ContactManager::TestCollisions(void) {

@@ -39,7 +39,7 @@ struct DropBoxes : public Demo {
         q3Transform tx;
         q3Identity(tx);
         boxDef.Set(tx, q3Vec3(50.0f, 1.0f, 50.0f));
-        body->AddBox(boxDef);
+        body->SetBox(boxDef);
 
         // Create boxes
         // for ( i32 i = 0; i < 10; ++i )
@@ -52,7 +52,7 @@ struct DropBoxes : public Demo {
         //	bodyDef.bodyType = eDynamicBody;
         //	body = scene.CreateBody( bodyDef );
         //	boxDef.Set( tx, q3Vec3( 1.0f, 1.0f, 1.0f ) );
-        //	body->AddBox( boxDef );
+        //	body->SetBox( boxDef );
         //}
     }
 
@@ -83,7 +83,7 @@ struct DropBoxes : public Demo {
             q3Identity(tx);
             q3BoxDef boxDef;
             boxDef.Set(tx, q3Vec3(1.0f, 1.0f, 1.0f));
-            body->AddBox(boxDef);
+            body->SetBox(boxDef);
         }
     }
 

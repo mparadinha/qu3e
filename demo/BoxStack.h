@@ -37,7 +37,7 @@ struct BoxStack : public Demo {
         q3Transform tx;
         q3Identity(tx);
         boxDef.Set(tx, q3Vec3(50.0f, 1.0f, 50.0f));
-        body->AddBox(boxDef);
+        body->SetBox(boxDef);
 
         // Create boxes
         // for ( i32 i = 0; i < 10; ++i )
@@ -50,7 +50,7 @@ struct BoxStack : public Demo {
         //	bodyDef.bodyType = eDynamicBody;
         //	body = scene.CreateBody( bodyDef );
         //	boxDef.Set( tx, q3Vec3( 1.0f, 1.0f, 1.0f ) );
-        //	body->AddBox( boxDef );
+        //	body->SetBox( boxDef );
         //}
 
         bodyDef.bodyType = eDynamicBody;
@@ -61,7 +61,7 @@ struct BoxStack : public Demo {
                 for (i32 k = 0; k < 10; ++k) {
                     bodyDef.position.Set(-16.0f + 1.0f * j, 1.0f * i + 5.0f, -16.0f + 1.0f * k);
                     body = scene.CreateBody(bodyDef);
-                    body->AddBox(boxDef);
+                    body->SetBox(boxDef);
                 }
             }
         }

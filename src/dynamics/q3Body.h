@@ -114,7 +114,7 @@ struct q3Body {
     i32 m_layers;
     Flags flags;
 
-    q3Box* m_boxes;
+    q3Box box;
     void* m_userData;
     q3Scene* m_scene;
     q3Body* m_next;
@@ -151,10 +151,10 @@ struct q3Body {
     // Boxes cannot be defined relative to one another.
     // The body will recalculate its mass values.
     // No contacts will be created until the next q3Scene::Step() call.
-    const q3Box* AddBox(const q3BoxDef& def);
+    const q3Box* SetBox(const q3BoxDef& def);
     // Removes this box from the body and broadphase.
     // Forces the body to recompute its mass if the body is dynamic.
-    void RemoveBox(q3Box* box);
+    void RemoveBox();
     // Removes all boxes from this body and the broadphase.
     void RemoveAllBoxes();
 

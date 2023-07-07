@@ -247,21 +247,20 @@ void q3Scene::Render(q3Render* render) {
     };
     // clang-format on
     for (q3Body* body : bodies.ptrIter()) {
-        for (q3Box* box = body->m_boxes; box; box = box->next) {
-            q3Transform world = q3Mul(body->m_tx, box->local);
-            const auto e = box->e;
-            const q3Vec3 vertices[8] = {q3Vec3(-e.x, -e.y, -e.z), q3Vec3(-e.x, -e.y, e.z),
-                                        q3Vec3(-e.x, e.y, -e.z),  q3Vec3(-e.x, e.y, e.z),
-                                        q3Vec3(e.x, -e.y, -e.z),  q3Vec3(e.x, -e.y, e.z),
-                                        q3Vec3(e.x, e.y, -e.z),   q3Vec3(e.x, e.y, e.z)};
-            for (i32 i = 0; i < 36; i += 3) {
-                q3Vec3 a = q3Mul(world, vertices[box_indices[i + 0] - 1]);
-                q3Vec3 b = q3Mul(world, vertices[box_indices[i + 1] - 1]);
-                q3Vec3 c = q3Mul(world, vertices[box_indices[i + 2] - 1]);
-                q3Vec3 n = q3Normalize(q3Cross(b - a, c - a));
-                render->SetTriNormal(n.x, n.y, n.z);
-                render->Triangle(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
-            }
+        const auto box = &body->box;
+        q3Transform world = q3Mul(body->m_tx, box->local);
+        const auto e = box->e;
+        const q3Vec3 vertices[8] = {q3Vec3(-e.x, -e.y, -e.z), q3Vec3(-e.x, -e.y, e.z),
+                                    q3Vec3(-e.x, e.y, -e.z),  q3Vec3(-e.x, e.y, e.z),
+                                    q3Vec3(e.x, -e.y, -e.z),  q3Vec3(e.x, -e.y, e.z),
+                                    q3Vec3(e.x, e.y, -e.z),   q3Vec3(e.x, e.y, e.z)};
+        for (i32 i = 0; i < 36; i += 3) {
+            q3Vec3 a = q3Mul(world, vertices[box_indices[i + 0] - 1]);
+            q3Vec3 b = q3Mul(world, vertices[box_indices[i + 1] - 1]);
+            q3Vec3 c = q3Mul(world, vertices[box_indices[i + 2] - 1]);
+            q3Vec3 n = q3Normalize(q3Cross(b - a, c - a));
+            render->SetTriNormal(n.x, n.y, n.z);
+            render->Triangle(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
         }
     }
 

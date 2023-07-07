@@ -66,7 +66,7 @@ struct RayPush : public Demo {
         q3Transform tx;
         q3Identity(tx);
         boxDef.Set(tx, q3Vec3(50.0f, 1.0f, 50.0f));
-        body->AddBox(boxDef);
+        body->SetBox(boxDef);
     }
 
     void Update() {
@@ -96,7 +96,7 @@ struct RayPush : public Demo {
             q3Identity(tx);
             q3BoxDef boxDef;
             boxDef.Set(tx, q3Vec3(1.0f, 1.0f, 1.0f));
-            body->AddBox(boxDef);
+            body->SetBox(boxDef);
         }
 
         rayCast.Init(q3Vec3(3.0f, 5.0f, 3.0f), q3Vec3(-1.0f, -1.0f, -1.0f));

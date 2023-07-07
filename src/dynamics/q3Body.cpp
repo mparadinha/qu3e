@@ -64,86 +64,45 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
     if (def.lockAxisY) flags.LockAxisY = true;
     if (def.lockAxisZ) flags.LockAxisZ = true;
 
-    m_boxes = NULL;
     contact_edge_list = NULL;
 }
 
-const q3Box* q3Body::AddBox(const q3BoxDef& def) {
+const q3Box* q3Body::SetBox(const q3BoxDef& def) {
     q3AABB aabb;
-    q3Box* box = m_scene->allocator.create<q3Box>().unwrap();
-    box->local = def.m_tx;
-    box->e = def.m_e;
-    box->next = m_boxes;
-    m_boxes = box;
-    box->ComputeAABB(m_tx, &aabb);
-
-    box->body = this;
-    box->friction = def.m_friction;
-    box->restitution = def.m_restitution;
-    box->density = def.m_density;
-    box->sensor = def.m_sensor;
+    box.local = def.m_tx;
+    box.e = def.m_e;
+    box.ComputeAABB(m_tx, &aabb);
+    box.body = this;
+    box.friction = def.m_friction;
+    box.restitution = def.m_restitution;
+    box.density = def.m_density;
+    box.sensor = def.m_sensor;
 
     CalculateMassData();
 
-    m_scene->contact_manager.m_broadphase.InsertBox(box, aabb);
+    m_scene->contact_manager.m_broadphase.InsertBox(&box, aabb);
     m_scene->new_box = true;
 
-    return box;
+    return &box;
 }
 
-void q3Body::RemoveBox(q3Box* box) {
-    debug::assert(box);
-    debug::assert(box->body == this);
-
-    q3Box* node = m_boxes;
-
-    bool found = false;
-    if (node == box) {
-        m_boxes = node->next;
-        found = true;
-    } else {
-        while (node) {
-            if (node->next == box) {
-                node->next = box->next;
-                found = true;
-                break;
-            }
-            node = node->next;
-        }
-    }
-
-    // This shape was not connected to this body.
-    debug::assert(found);
-
+void q3Body::RemoveBox() {
     // Remove all contacts associated with this shape
     // note: the `RemoveContact` frees a q3ContactConstraint which hold the
     // edge pointed to in that iteration, so we can't use a normal for loop
     q3ContactEdge* edge = contact_edge_list;
     while (edge) {
         q3ContactConstraint* contact = edge->constraint;
-        edge = edge->next;
-        if (box == contact->A || box == contact->B) {
-            m_scene->contact_manager.RemoveContact(contact);
-        }
+        m_scene->contact_manager.RemoveContact(contact);
     }
 
-    m_scene->contact_manager.m_broadphase.RemoveBox(box);
+    m_scene->contact_manager.m_broadphase.RemoveBox(&box);
 
     CalculateMassData();
-
-    m_scene->allocator.destroy(box);
 }
 
 void q3Body::RemoveAllBoxes() {
-    while (m_boxes) {
-        q3Box* next = m_boxes->next;
-
-        m_scene->contact_manager.m_broadphase.RemoveBox(m_boxes);
-        m_scene->allocator.destroy(m_boxes);
-
-        m_boxes = next;
-    }
-
+    m_scene->contact_manager.m_broadphase.RemoveBox(&box);
     m_scene->contact_manager.RemoveContactsFromBody(this);
 }
 
@@ -243,11 +202,9 @@ void q3Body::CalculateMassData() {
     q3Vec3 lc;
     q3Identity(lc);
 
-    for (q3Box* box = m_boxes; box; box = box->next) {
-        if (box->density == r32(0.0)) continue;
-
+    if (box.density != r32(0.0)) {
         q3MassData md;
-        box->ComputeMass(&md);
+        box.ComputeMass(&md);
         mass += md.mass;
         inertia += md.inertia;
         lc += md.center * md.mass;
@@ -284,8 +241,6 @@ void q3Body::SynchronizeProxies() {
     q3AABB aabb;
     q3Transform tx = m_tx;
 
-    for (q3Box* box = m_boxes; box; box = box->next) {
-        box->ComputeAABB(tx, &aabb);
-        broadphase->Update(box->broadPhaseIndex, aabb);
-    }
+    box.ComputeAABB(tx, &aabb);
+    broadphase->Update(box.broadPhaseIndex, aabb);
 }
