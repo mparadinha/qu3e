@@ -44,7 +44,6 @@ struct q3Box {
     r32 restitution;
     r32 density;
     i32 broadPhaseIndex;
-    mutable void* userData;
     mutable bool sensor;
 
     bool TestPoint(const q3Transform& tx, const q3Vec3& p) const;

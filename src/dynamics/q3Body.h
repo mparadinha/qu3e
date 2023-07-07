@@ -49,8 +49,6 @@ struct q3BodyDef {
         // Common default values
         bodyType = eStaticBody;
         layers = 0x000000001;
-        userData = NULL;
-        active = true;
         lockAxisX = false;
         lockAxisY = false;
         lockAxisZ = false;
@@ -68,7 +66,6 @@ struct q3BodyDef {
                             // directions.
     i32 layers;             // Bitmask of collision layers. Bodies matching at least one
                             // layer can collide.
-    void* userData;         // Use to store application specific data.
 
     r32 linearDamping;
     r32 angularDamping;
@@ -80,7 +77,6 @@ struct q3BodyDef {
     // not resolve any collisions.
     q3BodyType bodyType;
 
-    bool active;     // A body can start out inactive and just sits in memory.
     bool lockAxisX;  // Locked rotation on the x axis.
     bool lockAxisY;  // Locked rotation on the y axis.
     bool lockAxisZ;  // Locked rotation on the z axis.
@@ -88,7 +84,6 @@ struct q3BodyDef {
 
 struct q3Body {
     struct Flags {
-        bool Active = false;
         bool Island = false;
         bool Static = false;
         bool Dynamic = false;
@@ -115,7 +110,6 @@ struct q3Body {
     Flags flags;
 
     q3Box box;
-    void* m_userData;
     q3Scene* m_scene;
     q3Body* m_next;
     q3Body* m_prev;

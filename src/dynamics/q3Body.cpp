@@ -39,7 +39,6 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
     m_tx.position = def.position;
     m_gravityScale = def.gravityScale;
     m_layers = def.layers;
-    m_userData = def.userData;
     m_scene = scene;
     flags = {};
     m_linearDamping = def.linearDamping;
@@ -59,7 +58,6 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
         }
     }
 
-    if (def.active) flags.Active = true;
     if (def.lockAxisX) flags.LockAxisX = true;
     if (def.lockAxisY) flags.LockAxisY = true;
     if (def.lockAxisZ) flags.LockAxisZ = true;

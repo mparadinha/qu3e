@@ -109,8 +109,6 @@ void q3Scene::Step() {
     island.contacts.ensureTotalCapacity(contact_manager.contacts.len).unwrap();
     island.contact_states.ensureTotalCapacity(contact_manager.contacts.len).unwrap();
 
-    debug::print("Doing a q3Scene::Step...\n");
-
     // Build each active island and then solve each built island
     for (q3Body* seed : bodies.ptrIter()) {
         if (seed->flags.Island) continue; // Seed can't be part of an island already
