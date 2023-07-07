@@ -63,7 +63,6 @@ void q3ContactManager::AddContact(q3Box* A, q3Box* B) {
     contact->flags = {};
     contact->manifold.SetPair(A, B);
     contact->manifold.contactCount = 0;
-    for (i32 i = 0; i < 8; ++i) contact->manifold.contacts[i].warmStarted = 0;
 
     // Connect A
     contact->edgeA.constraint = contact;
@@ -143,8 +142,6 @@ void q3ContactManager::TestCollisions(void) {
         for (i32 i = 0; i < manifold->contactCount; ++i) {
             q3Contact* c = manifold->contacts + i;
             c->tangentImpulse[0] = c->tangentImpulse[1] = c->normalImpulse = r32(0.0);
-            u8 oldWarmStart = c->warmStarted;
-            c->warmStarted = u8(0);
 
             for (i32 j = 0; j < oldManifold.contactCount; ++j) {
                 q3Contact* oc = oldManifold.contacts + j;
@@ -155,7 +152,6 @@ void q3ContactManager::TestCollisions(void) {
                     q3Vec3 friction = ot0 * oc->tangentImpulse[0] + ot1 * oc->tangentImpulse[1];
                     c->tangentImpulse[0] = q3Dot(friction, manifold->tangentVectors[0]);
                     c->tangentImpulse[1] = q3Dot(friction, manifold->tangentVectors[1]);
-                    c->warmStarted = q3Max(oldWarmStart, u8(oldWarmStart + 1));
                     break;
                 }
             }

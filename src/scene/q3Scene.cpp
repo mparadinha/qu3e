@@ -109,6 +109,8 @@ void q3Scene::Step() {
     island.contacts.ensureTotalCapacity(contact_manager.contacts.len).unwrap();
     island.contact_states.ensureTotalCapacity(contact_manager.contacts.len).unwrap();
 
+    debug::print("Doing a q3Scene::Step...\n");
+
     // Build each active island and then solve each built island
     for (q3Body* seed : bodies.ptrIter()) {
         if (seed->flags.Island) continue; // Seed can't be part of an island already
@@ -269,10 +271,9 @@ void q3Scene::Render(q3Render* render) {
         q3Manifold m = contact.manifold;
         for (i32 j = 0; j < m.contactCount; ++j) {
             q3Contact c = m.contacts[j];
-            f32 blue = (f32)(255 - c.warmStarted) / 255.0f;
-            f32 red = 1.0f - blue;
             render->SetScale(10.0f, 10.0f, 10.0f);
-            render->SetPenColor(red, blue, blue);
+
+            render->SetPenColor(1, 0, 0);
             render->SetPenPosition(c.position.x, c.position.y, c.position.z);
             render->Point();
 

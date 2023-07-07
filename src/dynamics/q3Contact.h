@@ -53,7 +53,6 @@ struct q3Contact {
     r32 normalMass;        // Normal constraint mass
     r32 tangentMass[2];    // Tangent constraint mass
     q3FeaturePair fp;      // Features on A and B for this contact
-    u8 warmStarted;        // Used for debug rendering
 };
 
 struct q3Manifold {
