@@ -84,11 +84,9 @@ struct q3ContactEdge {
 
 struct q3ContactConstraint {
     struct Flags {
-        bool Colliding;    // Set when contact collides during a step
-        bool WasColliding; // Set when two objects stop colliding
-        bool Island;       // For internal marking during island forming
-
-        Flags() : Colliding(false), WasColliding(false), Island(false) {}
+        bool Colliding = false;    // Set when contact collides during a step
+        bool WasColliding = false; // Set when two objects stop colliding
+        bool Island = false;       // For internal marking during island forming
     };
 
     q3Box *A, *B;

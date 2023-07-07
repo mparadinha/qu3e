@@ -88,24 +88,14 @@ struct q3BodyDef {
 
 struct q3Body {
     struct Flags {
-        bool Active;
-        bool Island;
-        bool Static;
-        bool Dynamic;
-        bool Kinematic;
-        bool LockAxisX;
-        bool LockAxisY;
-        bool LockAxisZ;
-
-        Flags() :
-            Active(false),
-            Island(false),
-            Static(false),
-            Dynamic(false),
-            Kinematic(false),
-            LockAxisX(false),
-            LockAxisY(false),
-            LockAxisZ(false) {}
+        bool Active = false;
+        bool Island = false;
+        bool Static = false;
+        bool Dynamic = false;
+        bool Kinematic = false;
+        bool LockAxisX = false;
+        bool LockAxisY = false;
+        bool LockAxisZ = false;
     };
 
     q3Mat3 m_invInertiaModel;
