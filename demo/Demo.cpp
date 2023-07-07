@@ -36,7 +36,6 @@ distribution.
 #include "BoxStack.h"
 #include "DropBoxes.h"
 #include "RayPush.h"
-#include "Test.h"
 
 float dt = 1.0f / 60.0f;
 q3Scene scene(dt);
@@ -490,8 +489,7 @@ int InitApp(int argc, char** argv) {
     demos[0] = new DropBoxes();
     demos[1] = new RayPush();
     demos[2] = new BoxStack();
-    demos[3] = new Test();
-    demoCount = 4;
+    demoCount = 3;
     currentDemo = 1;
     demos[currentDemo]->Init();
     sprintf(sceneFileName, "q3dump.txt");
