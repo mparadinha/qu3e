@@ -58,6 +58,7 @@ void q3BroadPhase::InsertBox(q3Box* box, const q3AABB& aabb) {
         boxes.append({}).unwrap();
     }
 
+    debug::print("[broadphase] inserting box id=%d\n", id);
     boxes.items[id] = {.box = box, .aabb = aabb};
     box->broadPhaseIndex = id;
 }

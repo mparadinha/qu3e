@@ -28,11 +28,7 @@ struct DropBoxes : public Demo {
         acc = 0;
 
         // Create the floor
-        q3BodyDef bodyDef;
-        // bodyDef.axis.Set( q3RandomFloat( -1.0f, 1.0f ), q3RandomFloat(
-        // -1.0f, 1.0f ), q3RandomFloat( -1.0f, 1.0f ) ); bodyDef.angle = q3PI *
-        // q3RandomFloat( -1.0f, 1.0f );
-        q3Body* body = scene.CreateBody(bodyDef);
+        q3Body* body = scene.CreateBody({});
 
         q3BoxDef boxDef;
         boxDef.m_restitution = 0;
@@ -40,20 +36,6 @@ struct DropBoxes : public Demo {
         q3Identity(tx);
         boxDef.Set(tx, q3Vec3(50.0f, 1.0f, 50.0f));
         body->SetBox(boxDef);
-
-        // Create boxes
-        // for ( i32 i = 0; i < 10; ++i )
-        //{
-        //	bodyDef.position.Set( 0.0f, 1.2f * (i + 1), -0.0f );
-        //	//bodyDef.axis.Set( 0.0f, 1.0f, 0.0f );
-        //	//bodyDef.angle = q3PI * q3RandomFloat( -1.0f, 1.0f );
-        //	//bodyDef.angularVelocity.Set( 3.0f, 3.0f, 3.0f );
-        //	//bodyDef.linearVelocity.Set( 2.0f, 0.0f, 0.0f );
-        //	bodyDef.bodyType = eDynamicBody;
-        //	body = scene.CreateBody( bodyDef );
-        //	boxDef.Set( tx, q3Vec3( 1.0f, 1.0f, 1.0f ) );
-        //	body->SetBox( boxDef );
-        //}
     }
 
     virtual void Update() {
@@ -62,22 +44,18 @@ struct DropBoxes : public Demo {
         if (acc > 1.0f) {
             acc = 0;
 
-            q3BodyDef bodyDef;
-            bodyDef.position.Set(0.0f, 3.0f, 0.0f);
-            bodyDef.axis.Set(
-                q3RandomFloat(-1.0f, 1.0f), q3RandomFloat(-1.0f, 1.0f), q3RandomFloat(-1.0f, 1.0f)
-            );
-            bodyDef.angle = q3PI * q3RandomFloat(-1.0f, 1.0f);
-            bodyDef.bodyType = eDynamicBody;
-            bodyDef.angularVelocity.Set(
-                q3RandomFloat(1.0f, 3.0f), q3RandomFloat(1.0f, 3.0f), q3RandomFloat(1.0f, 3.0f)
-            );
-            bodyDef.angularVelocity *= q3Sign(q3RandomFloat(-1.0f, 1.0f));
-            bodyDef.linearVelocity.Set(
-                q3RandomFloat(1.0f, 3.0f), q3RandomFloat(1.0f, 3.0f), q3RandomFloat(1.0f, 3.0f)
-            );
-            bodyDef.linearVelocity *= q3Sign(q3RandomFloat(-1.0f, 1.0f));
-            q3Body* body = scene.CreateBody(bodyDef);
+            q3Body* body = scene.CreateBody({
+                .axis = q3Vec3(q3RandomFloat(-1, 1), q3RandomFloat(-1, 1), q3RandomFloat(-1, 1)),
+                .angle = q3PI * q3RandomFloat(-1, 1),
+                .position = q3Vec3(0, 3, 0),
+                .linearVelocity =
+                    q3Vec3(q3RandomFloat(1, 3), q3RandomFloat(1, 3), q3RandomFloat(1, 3)) *
+                    q3Sign(q3RandomFloat(-1, 1)),
+                .angularVelocity =
+                    q3Vec3(q3RandomFloat(1, 3), q3RandomFloat(1, 3), q3RandomFloat(1, 3)) *
+                    q3Sign(q3RandomFloat(-1, 1)),
+                .bodyType = eDynamicBody,
+            });
 
             q3Transform tx;
             q3Identity(tx);

@@ -334,7 +334,7 @@ void DisplayLoop(void) {
     UpdateImGui(1.0f / 60.0f);
 
     ImGui::Begin("q3Scene Settings", NULL, ImVec2(320, 165));
-    ImGui::Combo("Demo", &currentDemo, "Drop Boxes\0Ray Push\0Box Stack\0Test\0");
+    ImGui::Combo("Demo", &currentDemo, "Drop Boxes\0Ray Push\0Box Stack\0");
     ImGui::Checkbox("Pause", &paused);
     if (paused) ImGui::Checkbox("Single Step", &singleStep);
     ImGui::Checkbox("Friction", &enableFriction);
@@ -345,7 +345,8 @@ void DisplayLoop(void) {
 
     scene.Render(&renderer);
 
-    demos[currentDemo]->Render(&renderer);
+    // demos[currentDemo]->Render(&renderer);
+    demos[lastDemo]->Render(&renderer);
 
     ImGui::Render();
 
@@ -490,7 +491,7 @@ int InitApp(int argc, char** argv) {
     demos[1] = new RayPush();
     demos[2] = new BoxStack();
     demoCount = 3;
-    currentDemo = 1;
+    currentDemo = 0;
     demos[currentDemo]->Init();
     sprintf(sceneFileName, "q3dump.txt");
 

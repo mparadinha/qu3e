@@ -26,11 +26,7 @@ distribution.
 struct BoxStack : public Demo {
     virtual void Init() {
         // Create the floor
-        q3BodyDef bodyDef;
-        // bodyDef.axis.Set( q3RandomFloat( -1.0f, 1.0f ), q3RandomFloat(
-        // -1.0f, 1.0f ), q3RandomFloat( -1.0f, 1.0f ) ); bodyDef.angle = q3PI *
-        // q3RandomFloat( -1.0f, 1.0f );
-        q3Body* body = scene.CreateBody(bodyDef);
+        q3Body* body = scene.CreateBody({});
 
         q3BoxDef boxDef;
         boxDef.m_restitution = 0;
@@ -39,28 +35,15 @@ struct BoxStack : public Demo {
         boxDef.Set(tx, q3Vec3(50.0f, 1.0f, 50.0f));
         body->SetBox(boxDef);
 
-        // Create boxes
-        // for ( i32 i = 0; i < 10; ++i )
-        //{
-        //	bodyDef.position.Set( 0.0f, 1.2f * (i + 1), -0.0f );
-        //	//bodyDef.axis.Set( 0.0f, 1.0f, 0.0f );
-        //	//bodyDef.angle = q3PI * q3RandomFloat( -1.0f, 1.0f );
-        //	//bodyDef.angularVelocity.Set( 3.0f, 3.0f, 3.0f );
-        //	//bodyDef.linearVelocity.Set( 2.0f, 0.0f, 0.0f );
-        //	bodyDef.bodyType = eDynamicBody;
-        //	body = scene.CreateBody( bodyDef );
-        //	boxDef.Set( tx, q3Vec3( 1.0f, 1.0f, 1.0f ) );
-        //	body->SetBox( boxDef );
-        //}
-
-        bodyDef.bodyType = eDynamicBody;
         boxDef.Set(tx, q3Vec3(1.0f, 1.0f, 1.0f));
 
         for (i32 i = 0; i < 8; ++i) {
             for (i32 j = 0; j < 8; ++j) {
                 for (i32 k = 0; k < 10; ++k) {
-                    bodyDef.position.Set(-16.0f + 1.0f * j, 1.0f * i + 5.0f, -16.0f + 1.0f * k);
-                    body = scene.CreateBody(bodyDef);
+                    body = scene.CreateBody({
+                        .position = q3Vec3(-16.0f + 1.0f * j, 1.0f * i + 5.0f, -16.0f + 1.0f * k),
+                        .bodyType = eDynamicBody,
+                    });
                     body->SetBox(boxDef);
                 }
             }

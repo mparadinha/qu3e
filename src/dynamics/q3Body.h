@@ -35,51 +35,25 @@ distribution.
 enum q3BodyType { eStaticBody, eDynamicBody, eKinematicBody };
 
 struct q3BodyDef {
-    q3BodyDef() {
-        // Set all initial positions/velocties to zero
-        q3Identity(axis);
-        angle = r32(0.0);
-        q3Identity(position);
-        q3Identity(linearVelocity);
-        q3Identity(angularVelocity);
+    // Initial world transformation
+    q3Vec3 axis = q3Vec3(0, 0, 0);
+    r32 angle = 0;
+    q3Vec3 position = q3Vec3(0, 0, 0);
 
-        // Usually a gravity scale of 1 is the best
-        gravityScale = r32(1.0);
+    // Initial velocity in world space
+    q3Vec3 linearVelocity = q3Vec3(0, 0, 0);
+    q3Vec3 angularVelocity = q3Vec3(0, 0, 0);
 
-        // Common default values
-        bodyType = eStaticBody;
-        layers = 0x000000001;
-        lockAxisX = false;
-        lockAxisY = false;
-        lockAxisZ = false;
+    r32 gravityScale = 1;
 
-        linearDamping = r32(0.0);
-        angularDamping = r32(0.1);
-    }
+    r32 linearDamping = 0;
+    r32 angularDamping = 0.1;
 
-    q3Vec3 axis;            // Initial world transformation.
-    r32 angle;              // Initial world transformation. Radians.
-    q3Vec3 position;        // Initial world transformation.
-    q3Vec3 linearVelocity;  // Initial linear velocity in world space.
-    q3Vec3 angularVelocity; // Initial angular velocity in world space.
-    r32 gravityScale;       // Convenient scale values for gravity x, y and z
-                            // directions.
-    i32 layers;             // Bitmask of collision layers. Bodies matching at least one
-                            // layer can collide.
-
-    r32 linearDamping;
-    r32 angularDamping;
-
-    // Static, dynamic or kinematic. Dynamic bodies with zero mass are defaulted
-    // to a mass of 1. Static bodies never move or integrate, and are very CPU
-    // efficient. Static bodies have infinite mass. Kinematic bodies have
-    // infinite mass, but *do* integrate and move around. Kinematic bodies do
-    // not resolve any collisions.
-    q3BodyType bodyType;
-
-    bool lockAxisX;  // Locked rotation on the x axis.
-    bool lockAxisY;  // Locked rotation on the y axis.
-    bool lockAxisZ;  // Locked rotation on the z axis.
+    // Static bodies never move or integrate (CPU efficient) and have infinite mass.
+    // Dynamic bodies with zero mass are defaulted to a mass of 1.
+    // Kinematic bodies have infinite mass, but *do* integrate and move around.
+    // Kinematic bodies do not resolve any collisions.
+    q3BodyType bodyType = eStaticBody;
 };
 
 struct q3Body {
@@ -88,9 +62,6 @@ struct q3Body {
         bool Static = false;
         bool Dynamic = false;
         bool Kinematic = false;
-        bool LockAxisX = false;
-        bool LockAxisY = false;
-        bool LockAxisZ = false;
     };
 
     q3Mat3 m_invInertiaModel;
@@ -106,7 +77,6 @@ struct q3Body {
     q3Vec3 m_localCenter;
     q3Vec3 m_worldCenter;
     r32 m_gravityScale;
-    i32 m_layers;
     Flags flags;
 
     q3Box box;

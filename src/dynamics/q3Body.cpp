@@ -38,7 +38,6 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
     m_tx.rotation = m_q.ToMat3();
     m_tx.position = def.position;
     m_gravityScale = def.gravityScale;
-    m_layers = def.layers;
     m_scene = scene;
     flags = {};
     m_linearDamping = def.linearDamping;
@@ -57,10 +56,6 @@ q3Body::q3Body(const q3BodyDef& def, q3Scene* scene) {
             flags.Kinematic = true;
         }
     }
-
-    if (def.lockAxisX) flags.LockAxisX = true;
-    if (def.lockAxisY) flags.LockAxisY = true;
-    if (def.lockAxisZ) flags.LockAxisZ = true;
 
     contact_edge_list = NULL;
 }
@@ -166,8 +161,6 @@ bool q3Body::CanCollide(const q3Body* other) const {
     // Every collision must have at least one dynamic body involved
     if (!flags.Dynamic && !other->flags.Dynamic) return false;
 
-    if (!(m_layers & other->m_layers)) return false;
-
     return true;
 }
 
@@ -216,10 +209,6 @@ void q3Body::CalculateMassData() {
         q3Identity(identity);
         inertia -= (identity * q3Dot(lc, lc) - q3OuterProduct(lc, lc)) * mass;
         m_invInertiaModel = q3Inverse(inertia);
-
-        if (flags.LockAxisX) q3Identity(m_invInertiaModel.e.x);
-        if (flags.LockAxisY) q3Identity(m_invInertiaModel.e.y);
-        if (flags.LockAxisZ) q3Identity(m_invInertiaModel.e.z);
     } else {
         // Force all dynamic bodies to have some mass
         m_invMass = r32(1.0);
