@@ -130,7 +130,7 @@ struct Renderer : public q3Render {
         const float ratio = 10.0 / 6.0;
         const float near = 0.1;
         const float far = 1000;
-        const float fov = 70;
+        const float fov = 40;
         const float half_tan_fov = tanf(fov * M_PI / 360.0);
         float proj_mat[16] = {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

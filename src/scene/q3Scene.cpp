@@ -101,8 +101,7 @@ void q3Scene::Step() {
 
     for (q3Body* body : bodies.ptrIter()) body->flags.Island = false;
 
-    q3Island island =
-        q3Island::init(allocator, dt, gravity, iterations, enable_friction);
+    q3Island island = q3Island::init(allocator, dt, gravity, iterations, enable_friction);
     defer(island.deinit());
     island.bodies.ensureTotalCapacity(bodies.len).unwrap();
     island.velocities.ensureTotalCapacity(bodies.len).unwrap();
