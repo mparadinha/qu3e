@@ -92,8 +92,6 @@ struct q3ContactConstraint {
     q3Body *bodyA, *bodyB;
     q3ContactEdge edgeA;
     q3ContactEdge edgeB;
-    q3ContactConstraint* next;
-    q3ContactConstraint* prev;
 
     r32 friction;
     r32 restitution;
